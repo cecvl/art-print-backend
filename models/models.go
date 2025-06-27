@@ -15,6 +15,7 @@ type User struct {
 }
 
 type Artwork struct {
+	ID 			 string					`json:"id,omitempty"`
 	ArtistID     string                 `firestore:"artistId"`
 	Title        string                 `firestore:"title"`
 	Description  string                 `firestore:"description"`

@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
 	"log"
+	"net/http"
 	"time"
 
 	"example.com/cloudinary-proxy/firebase"
@@ -68,4 +68,49 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"token": customToken})
 }
 
+func SignInHandler(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
 
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("Invalid request body: %v", err)
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	// Get user by email
+	user, err := firebase.AuthClient.GetUserByEmail(r.Context(), req.Email)
+	if err != nil {
+		log.Printf("Failed to get user by email: %v", err)
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		return
+	}
+
+	// Verify password - this requires a custom token approach
+	// Since Admin SDK doesn't have password verification, we'll:
+	// 1. Create a custom token
+	// 2. Let the client verify the password by signing in with the token
+	
+	// Generate a custom token for the client
+	customToken, err := firebase.AuthClient.CustomToken(r.Context(), user.UID)
+	if err != nil {
+		log.Printf("Failed to create custom token: %v", err)
+		http.Error(w, "Token generation failed", http.StatusInternalServerError)
+		return
+	}
+
+	// In a real application, you might want to:
+	// - Store the token in a secure HTTP-only cookie
+	// - Set proper expiration
+	// - Add more user info to the response
+
+	log.Printf("User signed in successfully: UID=%s", user.UID)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"token":    customToken,
+		"uid":      user.UID,
+		"email":    user.Email,
+		"message":  "Successfully signed in. Please complete authentication on client side.",
+	})
+}

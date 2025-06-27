@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"example.com/cloudinary-proxy/firebase"
@@ -26,7 +29,7 @@ func UploadArtHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, fileHeader, err := r.FormFile("image")
+	file, fileHeader, err := r.FormFile("file")
 	if err != nil {
 		http.Error(w, "Image file is required", http.StatusBadRequest)
 		return
@@ -36,13 +39,16 @@ func UploadArtHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	description := r.FormValue("description")
 
+	//temporary check for empty api key
+	log.Println("API secret length:", len(os.Getenv("CLOUDINARY_API_SECRET")))
 	// ✅ Replace with env values in production
-	cld, err := cloudinary.NewFromParams("CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET")
+	cld, err := cloudinary.NewFromParams(os.Getenv("CLOUDINARY_CLOUD_NAME"), os.Getenv("CLOUDINARY_API_KEY"), os.Getenv("CLOUDINARY_API_SECRET"),)
 	if err != nil {
 		http.Error(w, "Cloudinary setup failed", http.StatusInternalServerError)
 		return
 	}
 
+	log.Printf("Uploading file; %s, size: %d bytes", fileHeader.Filename, fileHeader.Size)
 	// 🔧 Use pointers to bools
 	useFilename := true
 	uniqueFilename := true
@@ -54,6 +60,7 @@ func UploadArtHandler(w http.ResponseWriter, r *http.Request) {
 		UniqueFilename: &uniqueFilename,
 	})
 	if err != nil {
+		log.Printf("Cloudianary upload error: %v", err)
 		http.Error(w, "Upload failed", http.StatusInternalServerError)
 		return
 	}
@@ -73,5 +80,41 @@ func UploadArtHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+
+	json.NewEncoder(w).Encode(map[string]string{
+    "url": uploadResult.SecureURL,
+	})
+
+	log.Printf("Upload successful: %s", uploadResult.SecureURL)
 }
+
+func GetArtworksHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	snapshot, err := firebase.FirestoreClient.Collection("artworks").Documents(ctx).GetAll()
+	if err != nil {
+		log.Printf("❌ Failed to fetch artworks: %v", err)
+		http.Error(w, "Failed to fetch artworks", http.StatusInternalServerError)
+		return
+	}
+
+	var artworks []models.Artwork
+	for _, doc := range snapshot {
+	var art models.Artwork
+	if err := doc.DataTo(&art); err == nil {
+		art.ID = doc.Ref.ID // Set the unique Firestore doc ID
+		artworks = append(artworks, art)
+	}
+	}
+
+
+	log.Printf("✅ Fetched %d artworks", len(artworks)) // 👈 Log confirmation
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(artworks); err != nil {
+		log.Printf("❌ Failed to encode artworks to JSON: %v", err)
+		http.Error(w, "Encoding error", http.StatusInternalServerError)
+	}
+}
+

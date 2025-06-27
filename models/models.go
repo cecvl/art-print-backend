@@ -19,7 +19,7 @@ type Artwork struct {
 	ArtistID     string                 `firestore:"artistId"`
 	Title        string                 `firestore:"title"`
 	Description  string                 `firestore:"description"`
-	ImageURL     string                 `firestore:"imageUrl"`
+	ImageURL     string                 `firestore:"imageUrl" json:"imageUrl"`
 	PrintOptions map[string]interface{} `firestore:"printOptions"`
 	IsAvailable  bool                   `firestore:"isAvailable"`
 	CreatedAt    time.Time              `firestore:"createdAt"`

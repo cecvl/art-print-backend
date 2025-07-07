@@ -6,7 +6,7 @@ func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Allow your local frontend + future Firebase Hosting
 		allowedOrigins := map[string]bool{
-			"http://localhost:3000": true,       // Your local frontend
+			"http://localhost:5173": true,       // Your local frontend
 			"https://your-firebase-app.web.app": true, // Future prod
 		}
 

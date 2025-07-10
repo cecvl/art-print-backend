@@ -14,12 +14,11 @@ import (
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Println("⚠️ No .env file found, relying on exported env var")
+		log.Println("⚠️ No .env FILE FOUND, relying on exported env vars")
 	}
 
-	//Temporary check for empty api key
 	log.Printf("CLOUDINARY_API_SECRET length: %d", len(os.Getenv("CLOUDINARY_API_SECRET")))
-	
+
 	if err := firebase.InitFirebase(); err != nil {
 		log.Fatalf("Firebase initialization failed: %v", err)
 	}
@@ -27,14 +26,26 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// Register your handlers
+	// 🔐 Auth routes
 	mux.Handle("/signup", middleware.LogMiddleware(http.HandlerFunc(handlers.SignUpHandler)))
 	mux.Handle("/signin", middleware.LogMiddleware(http.HandlerFunc(handlers.SignInHandler)))
+
+	// 🖼️ Artworks
 	mux.Handle("/artworks/upload", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.UploadArtHandler))))
 	mux.Handle("/artworks", middleware.LogMiddleware(http.HandlerFunc(handlers.GetArtworksHandler)))
+
+	// 🛒 Cart
+	mux.Handle("/cart/add", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.AddToCartHandler))))
+	mux.Handle("/cart", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.GetCartHandler))))
+	mux.Handle("/cart/remove", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.RemoveFromCartHandler))))
+
+	// 💳 Checkout
+	mux.Handle("/checkout", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.CheckoutHandler))))
+
+	// 🧾 Fallback single-order handler (legacy)
 	mux.Handle("/orders", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.CreateOrderHandler))))
 
-	// Wrap everything with CORS middleware
+	// 🌍 CORS
 	handlerWithCORS := middleware.CORS(mux)
 
 	port := os.Getenv("PORT")

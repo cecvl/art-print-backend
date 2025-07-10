@@ -9,13 +9,19 @@ const (
 )
 
 type User struct {
-	Email     string    `firestore:"email"`
-	UserType  string    `firestore:"userType"`
-	CreatedAt time.Time `firestore:"createdAt"`
+	UID           string    `firestore:"uid"`
+	Email         string    `firestore:"email"`
+	Roles         []string  `firestore:"roles"` //  ["artist", "buyer", "printShop"]
+	Name          string    `firestore:"name"`
+	DateOfBirth   string    `firestore:"dateOfBirth"`
+	Description   string    `firestore:"description"`
+	AvatarURL     string    `firestore:"avatarUrl"`
+	BackgroundURL string    `firestore:"backgroundUrl"`
+	CreatedAt     time.Time `firestore:"createdAt"`
 }
 
 type Artwork struct {
-	ID 			 string					`json:"id,omitempty"`
+	ID           string                 `json:"id,omitempty"`
 	ArtistID     string                 `firestore:"artistId"`
 	Title        string                 `firestore:"title"`
 	Description  string                 `firestore:"description"`
@@ -25,13 +31,21 @@ type Artwork struct {
 	CreatedAt    time.Time              `firestore:"createdAt"`
 }
 
-type Order struct {
-	BuyerID        string            `firestore:"buyerId"`
-	ArtworkID      string            `firestore:"artworkId"`
-	PrintShopID    string            `firestore:"printShopId"`
-	SelectedOptions map[string]string `firestore:"selectedOptions"`
-	Status         string            `firestore:"status"`
-	CreatedAt      time.Time         `firestore:"createdAt"`
-	UpdatedAt      time.Time         `firestore:"updatedAt"`
+type CartItem struct {
+	ArtworkID string  `firestore:"artworkId"`
+	Quantity  int     `firestore:"quantity"`
+	Price     float64 `firestore:"price"`
 }
 
+type Order struct {
+	OrderID       string     `firestore:"orderId,omitempty"`
+	BuyerID       string     `firestore:"buyerId"`
+	PrintShopID   string     `firestore:"printShopId"`
+	Items         []CartItem `firestore:"items"`
+	TotalAmount   float64    `firestore:"totalAmount"`
+	PaymentMethod string     `firestore:"paymentMethod"`
+	TransactionID string     `firestore:"transactionId"`
+	Status        string     `firestore:"status"`
+	CreatedAt     time.Time  `firestore:"createdAt"`
+	UpdatedAt     time.Time  `firestore:"updatedAt"`
+}

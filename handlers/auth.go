@@ -44,10 +44,11 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Created Firebase user: UID=%s", user.UID)
 
 	_, err = firebase.FirestoreClient.Collection("users").Doc(user.UID).Set(r.Context(), models.User{
-		Email:     req.Email,
-		UserType:  req.UserType,
-		CreatedAt: time.Now(),
-	})
+	Email:     req.Email,
+	Roles:     []string{req.UserType}, // assign single role as array
+	CreatedAt: time.Now(),
+})
+
 	if err != nil {
 		log.Printf("Failed to write user to Firestore: %v. Rolling back Firebase user.", err)
 		firebase.AuthClient.DeleteUser(r.Context(), user.UID)

@@ -82,15 +82,20 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
 
 // === UPLOAD AVATAR & BACKGROUND IMAGES ===
 func UploadProfileAssetsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("📥 UploadProfileAssetsHandler triggered")
 	ctx := r.Context()
 	userID := ctx.Value("userId").(string)
 
+	
+
+	// Parse multipart form (10MB max)
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		log.Printf("❌ Multipart parse error: %v", err)
+		log.Printf("❌ Failed to parse multipart form: %v", err)
 		http.Error(w, "Invalid form", http.StatusBadRequest)
 		return
 	}
 
+	// Cloudinary client setup
 	cld, err := cloudinary.NewFromParams(
 		os.Getenv("CLOUDINARY_CLOUD_NAME"),
 		os.Getenv("CLOUDINARY_API_KEY"),
@@ -105,54 +110,67 @@ func UploadProfileAssetsHandler(w http.ResponseWriter, r *http.Request) {
 	updates := make(map[string]interface{})
 
 	// === Upload avatar ===
-	if avatarFile, avatarHeader, err := r.FormFile("avatar"); err == nil {
+	avatarFile, avatarHeader, err := r.FormFile("avatar")
+	log.Println("📥 Checking avatar field...")
+	if err != nil {
+		log.Printf("⚠️ No avatar file uploaded: %v", err)
+	} else {
 		defer avatarFile.Close()
-		log.Printf("📤 Avatar file: %s", avatarHeader.Filename)
+		log.Printf("📤 Avatar file received: %s", avatarHeader.Filename)
 
 		res, err := cld.Upload.Upload(ctx, avatarFile, uploader.UploadParams{
 			Folder: "users/" + userID + "/profile",
 		})
 		if err != nil {
-			log.Printf("❌ Avatar upload error: %v", err)
+			log.Printf("❌ Avatar upload failed: %v", err)
 			http.Error(w, "Avatar upload failed", http.StatusInternalServerError)
 			return
 		}
 		updates["avatarUrl"] = res.SecureURL
-		log.Printf("✅ Avatar URL: %s", res.SecureURL)
+		log.Printf("✅ Avatar uploaded: %s", res.SecureURL)
 	}
 
 	// === Upload background ===
-	if bgFile, bgHeader, err := r.FormFile("background"); err == nil {
+	bgFile, bgHeader, err := r.FormFile("background")
+	log.Println("📥 Checking background field...")
+
+	if err != nil {
+		log.Printf("⚠️ No background file uploaded: %v", err)
+	} else {
 		defer bgFile.Close()
-		log.Printf("📤 Background file: %s", bgHeader.Filename)
+		log.Printf("📤 Background file received: %s", bgHeader.Filename)
 
 		res, err := cld.Upload.Upload(ctx, bgFile, uploader.UploadParams{
 			Folder: "users/" + userID + "/profile",
 		})
 		if err != nil {
-			log.Printf("❌ Background upload error: %v", err)
+			log.Printf("❌ Background upload failed: %v", err)
 			http.Error(w, "Background upload failed", http.StatusInternalServerError)
 			return
 		}
 		updates["backgroundUrl"] = res.SecureURL
-		log.Printf("✅ Background URL: %s", res.SecureURL)
+		log.Printf("✅ Background uploaded: %s", res.SecureURL)
 	}
 
 	if len(updates) == 0 {
+		log.Println("⚠️ No files uploaded, no updates to Firestore")
 		http.Error(w, "No files uploaded", http.StatusBadRequest)
 		return
 	}
 
+	// Timestamp
 	updates["updatedAt"] = time.Now()
+	log.Printf("📝 Firestore update: %+v", updates)
 
+	// Write to Firestore
 	_, err = firebase.FirestoreClient.Collection("users").Doc(userID).Set(ctx, updates, firestore.MergeAll)
 	if err != nil {
-		log.Printf("❌ Firestore write error: %v", err)
+		log.Printf("❌ Firestore update failed: %v", err)
 		http.Error(w, "Failed to update profile", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("✅ Profile image update completed for %s", userID)
+	log.Printf("✅ Profile update complete for user %s", userID)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Profile images uploaded"})
 }

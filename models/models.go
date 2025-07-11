@@ -9,16 +9,17 @@ const (
 )
 
 type User struct {
-	UID           string    `firestore:"uid"`
-	Email         string    `firestore:"email"`
-	Roles         []string  `firestore:"roles"` //  ["artist", "buyer", "printShop"]
-	Name          string    `firestore:"name"`
-	DateOfBirth   string    `firestore:"dateOfBirth"`
-	Description   string    `firestore:"description"`
-	AvatarURL     string    `firestore:"avatarUrl"`
-	BackgroundURL string    `firestore:"backgroundUrl"`
-	CreatedAt     time.Time `firestore:"createdAt"`
+	UID           string    `firestore:"uid"`              // Firebase UID
+	Email         string    `firestore:"email"`            // Email address
+	Roles         []string  `firestore:"roles"`            // ["buyer", "artist", "printShop"]
+	Name          string    `firestore:"name"`             // Display name
+	DateOfBirth   string    `firestore:"dateOfBirth"`      // Format: YYYY-MM-DD
+	Description   string    `firestore:"description"`      // Profile bio
+	AvatarURL     string    `firestore:"avatarUrl"`        // Cloudinary avatar image
+	BackgroundURL string    `firestore:"backgroundUrl"`    // Cloudinary cover image
+	CreatedAt     time.Time `firestore:"createdAt"`        // Account creation time
 }
+
 
 type Artwork struct {
 	ID           string                 `json:"id,omitempty"`

@@ -43,9 +43,9 @@ func main() {
 	mux.Handle("/checkout", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.CheckoutHandler))))
 
 	// 🧑🎨 Profile
-	mux.Handle("/profile", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.GetProfileHandler))))
-	mux.Handle("/profile/update", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.UpdateProfileHandler))))
-	mux.Handle("/profile/upload-assets", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.UploadProfileAssetsHandler))))
+	mux.Handle("/profile", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.UpdateProfileHandler))))
+	mux.Handle("/profile/view", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.GetProfileHandler))))
+	
 
 	// 🛍️ Orders
 	// 🧾 Fallback single-order handler (legacy)

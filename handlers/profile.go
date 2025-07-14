@@ -34,68 +34,31 @@ func GetProfileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // === UPDATE PROFILE TEXT FIELDS ===
+// handlers/profile.go
 func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("📥 UpdateProfileHandler triggered")
 	ctx := r.Context()
 	userID := ctx.Value("userId").(string)
 
-	var updates map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
-		log.Printf("❌ Invalid JSON: %v", err)
-		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+	// Parse multipart form (max 10MB)
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		log.Printf("❌ Failed to parse multipart form: %v", err)
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
 
-	allowed := map[string]bool{
-		"name":          true,
-		"description":   true,
-		"dateOfBirth":   true,
-		"avatarUrl":     true,
-		"backgroundUrl": true,
-	}
+	updates := make(map[string]interface{})
 
-	filtered := make(map[string]interface{})
-	for k, v := range updates {
-		if allowed[k] {
-			filtered[k] = v
+	// ===== Text fields =====
+	fields := []string{"name", "description", "dateOfBirth"}
+	for _, field := range fields {
+		val := r.FormValue(field)
+		if val != "" {
+			updates[field] = val
 		}
 	}
 
-	if len(filtered) == 0 {
-		http.Error(w, "No valid fields to update", http.StatusBadRequest)
-		return
-	}
-
-	filtered["updatedAt"] = time.Now()
-
-	log.Printf("🔄 Updating profile for user %s with fields: %+v", userID, filtered)
-
-	_, err := firebase.FirestoreClient.Collection("users").Doc(userID).Set(ctx, filtered, firestore.MergeAll)
-	if err != nil {
-		log.Printf("❌ Failed to update Firestore: %v", err)
-		http.Error(w, "Failed to update profile", http.StatusInternalServerError)
-		return
-	}
-
-	log.Printf("✅ Profile updated for user %s", userID)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Profile updated"})
-}
-
-// === UPLOAD AVATAR & BACKGROUND IMAGES ===
-func UploadProfileAssetsHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("📥 UploadProfileAssetsHandler triggered")
-	ctx := r.Context()
-	userID := ctx.Value("userId").(string)
-
-	
-
-	// Parse multipart form (10MB max)
-	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		log.Printf("❌ Failed to parse multipart form: %v", err)
-		http.Error(w, "Invalid form", http.StatusBadRequest)
-		return
-	}
-
-	// Cloudinary client setup
+	// ===== Cloudinary Setup =====
 	cld, err := cloudinary.NewFromParams(
 		os.Getenv("CLOUDINARY_CLOUD_NAME"),
 		os.Getenv("CLOUDINARY_API_KEY"),
@@ -107,16 +70,10 @@ func UploadProfileAssetsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updates := make(map[string]interface{})
-
-	// === Upload avatar ===
-	avatarFile, avatarHeader, err := r.FormFile("avatar")
-	log.Println("📥 Checking avatar field...")
-	if err != nil {
-		log.Printf("⚠️ No avatar file uploaded: %v", err)
-	} else {
+	// ===== Avatar Upload =====
+	if avatarFile, avatarHeader, err := r.FormFile("avatar"); err == nil {
 		defer avatarFile.Close()
-		log.Printf("📤 Avatar file received: %s", avatarHeader.Filename)
+		log.Printf("📤 Avatar received: %s", avatarHeader.Filename)
 
 		res, err := cld.Upload.Upload(ctx, avatarFile, uploader.UploadParams{
 			Folder: "users/" + userID + "/profile",
@@ -130,15 +87,10 @@ func UploadProfileAssetsHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("✅ Avatar uploaded: %s", res.SecureURL)
 	}
 
-	// === Upload background ===
-	bgFile, bgHeader, err := r.FormFile("background")
-	log.Println("📥 Checking background field...")
-
-	if err != nil {
-		log.Printf("⚠️ No background file uploaded: %v", err)
-	} else {
+	// ===== Background Upload =====
+	if bgFile, bgHeader, err := r.FormFile("background"); err == nil {
 		defer bgFile.Close()
-		log.Printf("📤 Background file received: %s", bgHeader.Filename)
+		log.Printf("📤 Background received: %s", bgHeader.Filename)
 
 		res, err := cld.Upload.Upload(ctx, bgFile, uploader.UploadParams{
 			Folder: "users/" + userID + "/profile",
@@ -153,14 +105,11 @@ func UploadProfileAssetsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(updates) == 0 {
-		log.Println("⚠️ No files uploaded, no updates to Firestore")
-		http.Error(w, "No files uploaded", http.StatusBadRequest)
+		http.Error(w, "No valid fields to update", http.StatusBadRequest)
 		return
 	}
 
-	// Timestamp
 	updates["updatedAt"] = time.Now()
-	log.Printf("📝 Firestore update: %+v", updates)
 
 	// Write to Firestore
 	_, err = firebase.FirestoreClient.Collection("users").Doc(userID).Set(ctx, updates, firestore.MergeAll)
@@ -170,7 +119,7 @@ func UploadProfileAssetsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("✅ Profile update complete for user %s", userID)
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Profile images uploaded"})
+	log.Printf("✅ Profile updated for user %s", userID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Profile updated"})
 }

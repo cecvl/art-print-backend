@@ -3,29 +3,28 @@ package middleware
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"example.com/cloudinary-proxy/firebase"
 )
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer "){
-			http.Error(w, "Authorization header must start with Bearer", http.StatusUnauthorized)
-			return
-		}
-
-		//Extract only the token
-		idToken := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := firebase.AuthClient.VerifyIDToken(r.Context(), idToken)
+		// 🔐 Check for the 'session' cookie
+		cookie, err := r.Cookie("session")
 		if err != nil {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			http.Error(w, "Missing session cookie", http.StatusUnauthorized)
 			return
 		}
 
+		// 🧾 Verify session cookie with Firebase Admin SDK
+		token, err := firebase.AuthClient.VerifySessionCookie(r.Context(), cookie.Value)
+		if err != nil {
+			http.Error(w, "Invalid session cookie", http.StatusUnauthorized)
+			return
+		}
+
+		// ✅ Add UID to context for downstream handlers
 		ctx := context.WithValue(r.Context(), "userId", token.UID)
 		next(w, r.WithContext(ctx))
 	}
 }
-

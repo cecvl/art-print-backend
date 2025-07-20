@@ -71,8 +71,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		IDToken string `json:"idToken"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -81,37 +80,31 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get user by email
-	user, err := firebase.AuthClient.GetUserByEmail(r.Context(), req.Email)
-	if err != nil {
-		log.Printf("Failed to get user by email: %v", err)
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+	if req.IDToken == "" {
+		http.Error(w, "Missing ID token", http.StatusBadRequest)
 		return
 	}
 
-	// Verify password - this requires a custom token approach
-	// Since Admin SDK doesn't have password verification, we'll:
-	// 1. Create a custom token
-	// 2. Let the client verify the password by signing in with the token
-	
-	// Generate a custom token for the client
-	customToken, err := firebase.AuthClient.CustomToken(r.Context(), user.UID)
+	// Set session duration
+	expiresIn := time.Hour * 24 * 5 // 5 days
+	sessionCookie, err := firebase.AuthClient.SessionCookie(r.Context(), req.IDToken, expiresIn)
 	if err != nil {
-		log.Printf("Failed to create custom token: %v", err)
-		http.Error(w, "Token generation failed", http.StatusInternalServerError)
+		log.Printf("Failed to create session cookie: %v", err)
+		http.Error(w, "Failed to create session", http.StatusUnauthorized)
 		return
 	}
 
-	// In a real application, you might want to:
-	// - Store the token in a secure HTTP-only cookie
-	// - Set proper expiration
-	// - Add more user info to the response
-
-	log.Printf("User signed in successfully: UID=%s", user.UID)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"token":    customToken,
-		"uid":      user.UID,
-		"email":    user.Email,
-		"message":  "Successfully signed in. Please complete authentication on client side.",
+	// Set the cookie in response
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session",
+		Value:    sessionCookie,
+		MaxAge:   int(expiresIn.Seconds()),
+		HttpOnly: true,
+		Secure:   false, // ⚠️ set to true in production (when using HTTPS)
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
 	})
+
+	log.Printf("Session cookie set for user")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Signed in with session"})
 }

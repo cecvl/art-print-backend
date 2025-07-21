@@ -43,8 +43,8 @@ func main() {
 	mux.Handle("/checkout", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.CheckoutHandler))))
 
 	// 🧑🎨 Profile
-	mux.Handle("/profile", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.UpdateProfileHandler))))
-	mux.Handle("/profile/view", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.GetProfileHandler))))
+	mux.Handle("/getprofile", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.GetProfileHandler))))
+	mux.Handle("/updateprofile", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.UpdateProfileHandler))))
 	
 	// Sessions
 	mux.Handle("/sessionLogin", middleware.LogMiddleware(http.HandlerFunc(handlers.SessionLoginHandler)))

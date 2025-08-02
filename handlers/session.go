@@ -26,7 +26,7 @@ func SessionLoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set session expiration (5 days)
-	expiresIn := time.Hour * 24 * 5
+	expiresIn := time.Hour * 24 * 1
 
 	// Create the session cookie
 	sessionCookie, err := firebase.AuthClient.SessionCookie(r.Context(), body.Token, expiresIn)

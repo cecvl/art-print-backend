@@ -69,42 +69,4 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"token": customToken})
 }
 
-func SignInHandler(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		IDToken string `json:"idToken"`
-	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("Invalid request body: %v", err)
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
-	}
-
-	if req.IDToken == "" {
-		http.Error(w, "Missing ID token", http.StatusBadRequest)
-		return
-	}
-
-	// Set session duration
-	expiresIn := time.Hour * 24 * 5 // 5 days
-	sessionCookie, err := firebase.AuthClient.SessionCookie(r.Context(), req.IDToken, expiresIn)
-	if err != nil {
-		log.Printf("Failed to create session cookie: %v", err)
-		http.Error(w, "Failed to create session", http.StatusUnauthorized)
-		return
-	}
-
-	// Set the cookie in response
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session",
-		Value:    sessionCookie,
-		MaxAge:   int(expiresIn.Seconds()),
-		HttpOnly: true,
-		Secure:   false, // ⚠️ set to true in production (when using HTTPS)
-		Path:     "/",
-		SameSite: http.SameSiteLaxMode,
-	})
-
-	log.Printf("Session cookie set for user")
-	json.NewEncoder(w).Encode(map[string]string{"message": "Signed in with session"})
-}

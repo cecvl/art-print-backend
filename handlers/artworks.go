@@ -23,7 +23,7 @@ func UploadArtHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the multipart form (max 10MB)
+	// Parse the multipart form (max 10MB)Kuza
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
@@ -49,7 +49,7 @@ func UploadArtHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Uploading file; %s, size: %d bytes", fileHeader.Filename, fileHeader.Size)
-	// 🔧 Use pointers to bools
+	// 🔧 Use pointers to boolsArts
 	useFilename := true
 	uniqueFilename := true
 

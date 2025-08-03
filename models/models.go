@@ -32,11 +32,13 @@ type Artwork struct {
 	CreatedAt    time.Time              `firestore:"createdAt"`
 }
 
+//Utilize []CartItem in Order Struct
 type CartItem struct {
 	ArtworkID string  `firestore:"artworkId"`
 	Quantity  int     `firestore:"quantity"`
 	Price     float64 `firestore:"price"`
 }
+
 
 type Order struct {
 	OrderID       string     `firestore:"orderId,omitempty"`

@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 
+	"example.com/cloudinary-proxy/cache"
 	"example.com/cloudinary-proxy/firebase"
 	"example.com/cloudinary-proxy/handlers"
 	"example.com/cloudinary-proxy/middleware"
@@ -20,6 +23,20 @@ func main() {
 	//check if API keys are loaded
 
 	log.Printf("CLOUDINARY_API_SECRET length: %d", len(os.Getenv("CLOUDINARY_API_SECRET")))
+
+	//INitialize Redis
+	cache.InitRedis()
+
+	// Create a context with timeout for Redis connection test
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Test Redis connection
+	_, err := cache.RedisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	log.Println("✅ Connected to Redis")
 
 	if err := firebase.InitFirebase(); err != nil {
 		log.Fatalf("Firebase initialization failed: %v", err)

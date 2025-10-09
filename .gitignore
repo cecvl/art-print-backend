@@ -1,4 +1,25 @@
+# Env files 
 .env
-*.json
-cloudinary-proxy
+.env.local
 
+# Firebase emulator state (can be regenerated)
+.dataconnect/
+.firebaserc
+
+# Go build cache / binaries
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# IDE/editor
+.vscode/
+.idea/
+.DS_Store
+
+*.log
+*.json
+*.rules

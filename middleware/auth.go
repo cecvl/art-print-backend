@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"example.com/cloudinary-proxy/firebase"
+	"github.com/cecvl/art-print-backend/firebase"
 )
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {

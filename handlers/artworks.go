@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"example.com/cloudinary-proxy/firebase"
-	"example.com/cloudinary-proxy/models"
+	"github.com/cecvl/art-print-backend/firebase"
+	"github.com/cecvl/art-print-backend/models"
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )

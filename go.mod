@@ -1,4 +1,4 @@
-module example.com/cloudinary-proxy
+module github.com/cecvl/art-print-backend
 
 go 1.23.2
 

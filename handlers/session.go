@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"example.com/cloudinary-proxy/firebase"
+	"github.com/cecvl/art-print-backend/firebase"
 )
 
 type SessionLoginRequest struct {

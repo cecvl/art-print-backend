@@ -7,9 +7,9 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"example.com/cloudinary-proxy/firebase"
-	"example.com/cloudinary-proxy/handlers"
-	"example.com/cloudinary-proxy/middleware"
+	"github.com/cecvl/art-print-backend/firebase"
+	"github.com/cecvl/art-print-backend/handlers"
+	"github.com/cecvl/art-print-backend/middleware"
 )
 
 func main() {

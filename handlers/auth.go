@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"example.com/cloudinary-proxy/firebase"
-	"example.com/cloudinary-proxy/models"
+	"github.com/cecvl/art-print-backend/firebase"
+	"github.com/cecvl/art-print-backend/models"
 	"firebase.google.com/go/auth"
 )
 

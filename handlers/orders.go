@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	"example.com/cloudinary-proxy/firebase"
-	"example.com/cloudinary-proxy/models"
+	"github.com/cecvl/art-print-backend/firebase"
+	"github.com/cecvl/art-print-backend/models"
 	"google.golang.org/api/iterator"
 )
 

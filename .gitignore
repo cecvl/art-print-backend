@@ -1,6 +1,6 @@
 # Env files 
 .env
-.env.local
+.env.*
 
 # Firebase emulator state (can be regenerated)
 .dataconnect/

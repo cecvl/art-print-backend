@@ -11,7 +11,7 @@ GO_ENV?=dev
 # Default target
 .PHONY: run
 run:
-	@echo "🚀 Running $(APP_NAME) in $(GO_ENV) mode..."
+	@echo "🚀 Running $(APP_NAME) ..."
 	@cp $(CONFIG_DIR)/.env.$(GO_ENV) .env 2>/dev/null || echo "⚠️ No $(CONFIG_DIR)/.env.$(GO_ENV) found, using defaults"
 	env GO_ENV=$(GO_ENV) go run ./$(CMD_DIR)
 	@rm -f .env

@@ -9,17 +9,16 @@ const (
 )
 
 type User struct {
-	UID           string    `firestore:"uid"`              // Firebase UID
-	Email         string    `firestore:"email"`            // Email address
-	Roles         []string  `firestore:"roles"`            // ["buyer", "artist", "printShop"]
-	Name          string    `firestore:"name"`             // Display name
-	DateOfBirth   string    `firestore:"dateOfBirth"`      // Format: YYYY-MM-DD
-	Description   string    `firestore:"description"`      // Profile bio
-	AvatarURL     string    `firestore:"avatarUrl"`        // Cloudinary avatar image
-	BackgroundURL string    `firestore:"backgroundUrl"`    // Cloudinary cover image
-	CreatedAt     time.Time `firestore:"createdAt"`        // Account creation time
+	UID           string    `firestore:"uid"`           // Firebase UID
+	Email         string    `firestore:"email"`         // Email address
+	Roles         []string  `firestore:"roles"`         // ["buyer", "artist", "printShop"]
+	Name          string    `firestore:"name"`          // Display name
+	DateOfBirth   string    `firestore:"dateOfBirth"`   // Format: YYYY-MM-DD
+	Description   string    `firestore:"description"`   // Profile bio
+	AvatarURL     string    `firestore:"avatarUrl"`     // Cloudinary avatar image
+	BackgroundURL string    `firestore:"backgroundUrl"` // Cloudinary cover image
+	CreatedAt     time.Time `firestore:"createdAt"`     // Account creation time
 }
-
 
 type Artwork struct {
 	ID           string                 `json:"id,omitempty"`
@@ -32,13 +31,12 @@ type Artwork struct {
 	CreatedAt    time.Time              `firestore:"createdAt"`
 }
 
-//Utilize []CartItem in Order Struct
+// Utilize []CartItem in Order Struct
 type CartItem struct {
 	ArtworkID string  `firestore:"artworkId"`
 	Quantity  int     `firestore:"quantity"`
 	Price     float64 `firestore:"price"`
 }
-
 
 type Order struct {
 	OrderID       string     `firestore:"orderId,omitempty"`

@@ -42,7 +42,7 @@ func UploadArtHandler(w http.ResponseWriter, r *http.Request) {
 	//temporary check for empty api key
 	log.Println("API secret length:", len(os.Getenv("CLOUDINARY_API_SECRET")))
 	// ✅ Replace with env values in production
-	cld, err := cloudinary.NewFromParams(os.Getenv("CLOUDINARY_CLOUD_NAME"), os.Getenv("CLOUDINARY_API_KEY"), os.Getenv("CLOUDINARY_API_SECRET"),)
+	cld, err := cloudinary.NewFromParams(os.Getenv("CLOUDINARY_CLOUD_NAME"), os.Getenv("CLOUDINARY_API_KEY"), os.Getenv("CLOUDINARY_API_SECRET"))
 	if err != nil {
 		http.Error(w, "Cloudinary setup failed", http.StatusInternalServerError)
 		return
@@ -84,7 +84,7 @@ func UploadArtHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 
 	json.NewEncoder(w).Encode(map[string]string{
-    "url": uploadResult.SecureURL,
+		"url": uploadResult.SecureURL,
 	})
 
 	log.Printf("Upload successful: %s", uploadResult.SecureURL)
@@ -101,13 +101,12 @@ func GetArtworksHandler(w http.ResponseWriter, r *http.Request) {
 
 	var artworks []models.Artwork
 	for _, doc := range snapshot {
-	var art models.Artwork
-	if err := doc.DataTo(&art); err == nil {
-		art.ID = doc.Ref.ID // Set the unique Firestore doc ID
-		artworks = append(artworks, art)
+		var art models.Artwork
+		if err := doc.DataTo(&art); err == nil {
+			art.ID = doc.Ref.ID // Set the unique Firestore doc ID
+			artworks = append(artworks, art)
+		}
 	}
-	}
-
 
 	log.Printf("✅ Fetched %d artworks", len(artworks)) // 👈 Log confirmation
 
@@ -117,4 +116,3 @@ func GetArtworksHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Encoding error", http.StatusInternalServerError)
 	}
 }
-

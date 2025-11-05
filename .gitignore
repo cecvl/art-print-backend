@@ -5,6 +5,7 @@
 # Firebase emulator state (can be regenerated)
 .dataconnect/
 .firebaserc
+emulator_data/
 
 # Go build cache / binaries
 bin/

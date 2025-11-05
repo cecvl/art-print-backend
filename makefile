@@ -38,6 +38,16 @@ build-linux:
 	@echo "✅ Linux binary ready: $(BIN_DIR)/$(APP_NAME)"
 
 # ─────────────────────────────
+# Firebase Emulators
+# ─────────────────────────────
+.PHONY: emulators
+emulators:
+	@echo "🔥 Starting Firebase emulators..."
+	@cp $(CONFIG_DIR)/.env.$(GO_ENV) .env 2>/dev/null || echo "⚠️ No $(CONFIG_DIR)/.env.$(GO_ENV) found, using defaults"
+	firebase emulators:start --import=./emulator_data --export-on-exit
+	@rm -f .env
+
+# ─────────────────────────────
 # Linting & Cleanup
 # ─────────────────────────────
 .PHONY: fmt

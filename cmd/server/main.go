@@ -46,9 +46,14 @@ func main() {
 
 	// 🌱 Run seeders only in development
 	if env == "dev" {
-		log.Println("🌱 Seeding local Firestore with demo artworks...")
+		log.Println("🌱 Seeding local Firestore and Auth with demo data...")
+
+		if err := seeders.SeedUsers(context.Background(), firebase.AuthClient, firebase.FirestoreClient); err != nil {
+			log.Printf("⚠️ Seeder (users) error: %v", err)
+		}
+
 		if err := seeders.SeedArtworks(context.Background(), firebase.FirestoreClient); err != nil {
-			log.Printf("⚠️ Seeder error: %v", err)
+			log.Printf("⚠️ Seeder (artworks) error: %v", err)
 		}
 	}
 

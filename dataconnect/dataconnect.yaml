@@ -1,6 +1,6 @@
 specVersion: "v1"
 serviceId: "art-print-backend"
-location: "us-south1"
+location: "us-east4"
 schema:
   source: "./schema"
   datasource:

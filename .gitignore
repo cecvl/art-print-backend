@@ -24,3 +24,5 @@ bin/
 *.json
 *.rules
 art-print-backend
+
+*.gql

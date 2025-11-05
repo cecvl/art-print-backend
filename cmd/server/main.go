@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"github.com/cecvl/art-print-backend/internal/firebase"
 	"github.com/cecvl/art-print-backend/internal/handlers"
 	"github.com/cecvl/art-print-backend/internal/middleware"
+	"github.com/cecvl/art-print-backend/internal/seeders"
 )
 
 func main() {
@@ -41,6 +43,14 @@ func main() {
 		log.Fatalf("🔥 Firebase initialization failed: %v", err)
 	}
 	defer firebase.FirestoreClient.Close()
+
+	// 🌱 Run seeders only in development
+	if env == "dev" {
+		log.Println("🌱 Seeding local Firestore with demo artworks...")
+		if err := seeders.SeedArtworks(context.Background(), firebase.FirestoreClient); err != nil {
+			log.Printf("⚠️ Seeder error: %v", err)
+		}
+	}
 
 	mux := http.NewServeMux()
 

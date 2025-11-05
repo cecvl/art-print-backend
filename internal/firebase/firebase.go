@@ -42,6 +42,7 @@ func InitFirebase() error {
 	}
 
 	log.Println("✅ Firebase initialized successfully")
+
 	return nil
 }
 

@@ -29,6 +29,11 @@ func main() {
 	} else {
 		log.Printf("✅ Loaded environment from %s", envPath)
 	}
+	// Initialize Firebase
+	if err := firebase.InitFirebase(); err != nil {
+		log.Fatalf("🔥 Firebase initialization failed: %v", err)
+	}
+	defer firebase.FirestoreClient.Close()
 
 	// Check Cloudinary secret presence
 	secret := os.Getenv("CLOUDINARY_API_SECRET")
@@ -37,12 +42,6 @@ func main() {
 	} else {
 		log.Printf("🔐 CLOUDINARY_API_SECRET length: %d", len(secret))
 	}
-
-	// Initialize Firebase
-	if err := firebase.InitFirebase(); err != nil {
-		log.Fatalf("🔥 Firebase initialization failed: %v", err)
-	}
-	defer firebase.FirestoreClient.Close()
 
 	// 🌱 Run seeders only in development
 	if env == "dev" {
@@ -70,8 +69,8 @@ func main() {
 	mux.Handle("/cart/add", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.AddToCartHandler))))
 	mux.Handle("/cart", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.GetCartHandler))))
 	mux.Handle("/cart/remove", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.RemoveFromCartHandler))))
-	mux.Handle("/checkout", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.CheckoutOrderHandler))))
-	mux.Handle("/checkout/get", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.GetOrdersHandler))))
+	mux.Handle("/checkout", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.CheckoutHandler))))
+	mux.Handle("/orders", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.GetOrdersHandler))))
 
 	// Apply CORS middleware
 	handlerWithCORS := middleware.CORS(mux)

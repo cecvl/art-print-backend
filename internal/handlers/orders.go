@@ -1,92 +1,79 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
 
-	"cloud.google.com/go/firestore"
 	"github.com/cecvl/art-print-backend/internal/firebase"
 	"github.com/cecvl/art-print-backend/internal/models"
-	"google.golang.org/api/iterator"
+	"github.com/google/uuid"
 )
 
-// ===== Checkout order =====
-func CheckoutOrderHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID := ctx.Value("userId").(string)
+// CheckoutHandler converts the user's cart into an order
+func CheckoutHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	fsClient := firebase.GetFirestoreClient()
+	buyerID := r.Context().Value("userID").(string)
 
-	// Find the cart order
-	iter := firebase.FirestoreClient.Collection("orders").
-		Where("buyerId", "==", userID).
-		Where("status", "==", "cart").
-		Limit(1).Documents(ctx)
-
-	doc, err := iter.Next()
-	if err == iterator.Done {
-		http.Error(w, "No cart to checkout", http.StatusBadRequest)
-		return
-	}
-	if err != nil {
-		http.Error(w, "Error retrieving cart", http.StatusInternalServerError)
+	cartDoc, err := fsClient.Collection("carts").Doc(buyerID).Get(ctx)
+	if err != nil || !cartDoc.Exists() {
+		http.Error(w, "cart is empty", http.StatusBadRequest)
 		return
 	}
 
-	var order models.Order
-	if err := doc.DataTo(&order); err != nil {
-		http.Error(w, "Error parsing order", http.StatusInternalServerError)
+	var cart models.Cart
+	_ = cartDoc.DataTo(&cart)
+
+	var total float64
+	for _, item := range cart.Items {
+		total += item.Price * float64(item.Quantity)
+	}
+
+	order := models.Order{
+		OrderID:       uuid.NewString(),
+		BuyerID:       buyerID,
+		Items:         cart.Items,
+		TotalAmount:   total,
+		Status:        "pending",
+		PaymentMethod: "unpaid",
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	// ✅ Correct assignment for Firestore Set
+	if _, err := fsClient.Collection("orders").Doc(order.OrderID).Set(ctx, order); err != nil {
+		http.Error(w, "failed to create order", http.StatusInternalServerError)
 		return
 	}
 
-	if len(order.Items) == 0 {
-		http.Error(w, "Cart is empty", http.StatusBadRequest)
+	// ✅ Delete returns only an error
+	if _, err := fsClient.Collection("carts").Doc(buyerID).Delete(ctx); err != nil {
+		http.Error(w, "failed to clear cart", http.StatusInternalServerError)
 		return
 	}
 
-	// TODO: Validate each artwork again before checkout
-	// TODO: Assign print shop dynamically
-	order.PrintShopID = "default-printshop-id" // Placeholder
-
-	order.Status = "pending"
-	order.UpdatedAt = time.Now()
-
-	_, err = doc.Ref.Set(ctx, order)
-	if err != nil {
-		http.Error(w, "Failed to checkout", http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message":     "Order placed",
-		"orderId":     doc.Ref.ID,
-		"totalAmount": order.TotalAmount,
-	})
+	json.NewEncoder(w).Encode(order)
 }
 
-// ===== Get all orders for buyer =====
+// GetOrdersHandler fetches all orders for the authenticated user
 func GetOrdersHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID := ctx.Value("userId").(string)
+	ctx := context.Background()
+	fsClient := firebase.GetFirestoreClient()
+	buyerID := r.Context().Value("userID").(string)
 
-	iter := firebase.FirestoreClient.Collection("orders").
-		Where("buyerId", "==", userID).
-		OrderBy("createdAt", firestore.Desc).
-		Documents(ctx)
+	snaps, err := fsClient.Collection("orders").Where("buyerId", "==", buyerID).Documents(ctx).GetAll()
+	if err != nil {
+		http.Error(w, "failed to fetch orders", http.StatusInternalServerError)
+		return
+	}
 
 	var orders []models.Order
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			http.Error(w, "Error retrieving orders", http.StatusInternalServerError)
-			return
-		}
-		var order models.Order
-		if err := doc.DataTo(&order); err == nil {
-			orders = append(orders, order)
-		}
+	for _, snap := range snaps {
+		var o models.Order
+		_ = snap.DataTo(&o)
+		orders = append(orders, o)
 	}
 
 	json.NewEncoder(w).Encode(orders)

@@ -38,6 +38,12 @@ type CartItem struct {
 	Price     float64 `firestore:"price"`
 }
 
+type Cart struct {
+	BuyerID   string     `firestore:"buyerId"`
+	Items     []CartItem `firestore:"items"`
+	UpdatedAt time.Time  `firestore:"updatedAt"`
+}
+
 type Order struct {
 	OrderID       string     `firestore:"orderId,omitempty"`
 	BuyerID       string     `firestore:"buyerId"`

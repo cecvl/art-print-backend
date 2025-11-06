@@ -1,211 +1,114 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
 
-	"cloud.google.com/go/firestore"
 	"github.com/cecvl/art-print-backend/internal/firebase"
 	"github.com/cecvl/art-print-backend/internal/models"
-	"google.golang.org/api/iterator"
 )
 
-// ===== Add item to cart =====
+// AddToCartHandler adds or updates an item in the user's cart
 func AddToCartHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID := ctx.Value("userId").(string)
+	ctx := context.Background()
+	fsClient := firebase.GetFirestoreClient()
+	buyerID := r.Context().Value("userID").(string)
 
-	//Calculate total cost //From []CartItem in Order Struct
-	var req struct {
-		ArtworkID string `json:"artworkId"`
-		Quantity  int    `json:"quantity"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+	var newItem models.CartItem
+	if err := json.NewDecoder(r.Body).Decode(&newItem); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Validate artwork & get trusted price
-	artDoc, err := firebase.FirestoreClient.Collection("artworks").Doc(req.ArtworkID).Get(ctx)
-	if err != nil || !artDoc.Exists() {
-		http.Error(w, "Artwork not found", http.StatusNotFound)
-		return
-	}
-	var art models.Artwork
-	if err := artDoc.DataTo(&art); err != nil {
-		http.Error(w, "Error parsing artwork", http.StatusInternalServerError)
-		return
-	}
-	if !art.IsAvailable {
-		http.Error(w, "Artwork not available", http.StatusConflict)
-		return
-	}
-	price, ok := art.PrintOptions["basePrice"].(float64)
-	if !ok {
-		http.Error(w, "Invalid price data", http.StatusInternalServerError)
-		return
-	}
+	cartRef := fsClient.Collection("carts").Doc(buyerID)
+	doc, err := cartRef.Get(ctx)
 
-	// Find or create cart order
-	var cartOrder *firestore.DocumentSnapshot
-	iter := firebase.FirestoreClient.Collection("orders").
-		Where("buyerId", "==", userID).
-		Where("status", "==", "cart").
-		Limit(1).Documents(ctx)
-
-	for {
-		doc, err := iter.Next()
-		if err == iterator.Done {
-			break
+	var cart models.Cart
+	if err == nil && doc.Exists() {
+		_ = doc.DataTo(&cart)
+		updated := false
+		for i, item := range cart.Items {
+			if item.ArtworkID == newItem.ArtworkID {
+				cart.Items[i].Quantity += newItem.Quantity
+				updated = true
+				break
+			}
 		}
-		if err != nil {
-			http.Error(w, "Error checking cart", http.StatusInternalServerError)
-			return
-		}
-		cartOrder = doc
-	}
-	iter.Stop()
-
-	var order models.Order
-	if cartOrder != nil {
-		if err := cartOrder.DataTo(&order); err != nil {
-			http.Error(w, "Error reading cart order", http.StatusInternalServerError)
-			return
+		if !updated {
+			cart.Items = append(cart.Items, newItem)
 		}
 	} else {
-		order = models.Order{
-			BuyerID:   userID,
-			Items:     []models.CartItem{},
-			Status:    "cart",
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+		cart = models.Cart{
+			BuyerID: buyerID,
+			Items:   []models.CartItem{newItem},
 		}
 	}
 
-	// Add or update cart item
-	itemExists := false
-	for i, item := range order.Items {
-		if item.ArtworkID == req.ArtworkID {
-			order.Items[i].Quantity += req.Quantity
-			itemExists = true
-			break
-		}
-	}
-	if !itemExists {
-		order.Items = append(order.Items, models.CartItem{
-			ArtworkID: req.ArtworkID,
-			Quantity:  req.Quantity,
-			Price:     price,
-		})
-	}
-
-	// Recalculate total
-	var total float64
-	for _, item := range order.Items {
-		total += item.Price * float64(item.Quantity)
-	}
-	order.TotalAmount = total
-	order.UpdatedAt = time.Now()
-
-	// Save cart
-	if cartOrder != nil {
-		_, err = cartOrder.Ref.Set(ctx, order)
-	} else {
-		_, _, err = firebase.FirestoreClient.Collection("orders").Add(ctx, order)
-	}
-	if err != nil {
-		http.Error(w, "Failed to save cart", http.StatusInternalServerError)
+	cart.UpdatedAt = time.Now()
+	if _, err := cartRef.Set(ctx, cart); err != nil {
+		http.Error(w, "failed to update cart", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(order)
+	json.NewEncoder(w).Encode(cart)
 }
 
-// ===== View cart =====
+// GetCartHandler retrieves the user's cart
 func GetCartHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID := ctx.Value("userId").(string)
+	ctx := context.Background()
+	fsClient := firebase.GetFirestoreClient()
+	buyerID := r.Context().Value("userID").(string)
 
-	iter := firebase.FirestoreClient.Collection("orders").
-		Where("buyerId", "==", userID).
-		Where("status", "==", "cart").
-		Limit(1).Documents(ctx)
-
-	doc, err := iter.Next()
-	if err == iterator.Done {
-		http.Error(w, "Cart is empty", http.StatusNotFound)
-		return
-	}
-	if err != nil {
-		http.Error(w, "Error retrieving cart", http.StatusInternalServerError)
+	doc, err := fsClient.Collection("carts").Doc(buyerID).Get(ctx)
+	if err != nil || !doc.Exists() {
+		json.NewEncoder(w).Encode(models.Cart{BuyerID: buyerID, Items: []models.CartItem{}})
 		return
 	}
 
-	var order models.Order
-	if err := doc.DataTo(&order); err != nil {
-		http.Error(w, "Error parsing order", http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(order)
+	var cart models.Cart
+	_ = doc.DataTo(&cart)
+	json.NewEncoder(w).Encode(cart)
 }
 
-// ===== Remove item from cart =====
+// RemoveFromCartHandler removes an item from the user's cart
 func RemoveFromCartHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID := ctx.Value("userId").(string)
-	artworkID := r.URL.Query().Get("artworkId")
-	if artworkID == "" {
-		http.Error(w, "Missing artworkId", http.StatusBadRequest)
+	ctx := context.Background()
+	fsClient := firebase.GetFirestoreClient()
+	buyerID := r.Context().Value("userID").(string)
+
+	var payload struct {
+		ArtworkID string `json:"artworkId"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	iter := firebase.FirestoreClient.Collection("orders").
-		Where("buyerId", "==", userID).
-		Where("status", "==", "cart").
-		Limit(1).Documents(ctx)
-
-	doc, err := iter.Next()
-	if err == iterator.Done {
-		http.Error(w, "Cart is empty", http.StatusNotFound)
-		return
-	}
-	if err != nil {
-		http.Error(w, "Error retrieving cart", http.StatusInternalServerError)
+	cartRef := fsClient.Collection("carts").Doc(buyerID)
+	doc, err := cartRef.Get(ctx)
+	if err != nil || !doc.Exists() {
+		http.Error(w, "cart not found", http.StatusNotFound)
 		return
 	}
 
-	var order models.Order
-	if err := doc.DataTo(&order); err != nil {
-		http.Error(w, "Error parsing order", http.StatusInternalServerError)
-		return
-	}
+	var cart models.Cart
+	_ = doc.DataTo(&cart)
 
-	// Filter out removed item
 	newItems := []models.CartItem{}
-	for _, item := range order.Items {
-		if item.ArtworkID != artworkID {
+	for _, item := range cart.Items {
+		if item.ArtworkID != payload.ArtworkID {
 			newItems = append(newItems, item)
 		}
 	}
-	order.Items = newItems
+	cart.Items = newItems
+	cart.UpdatedAt = time.Now()
 
-	// Recalculate total
-	var total float64
-	for _, item := range order.Items {
-		total += item.Price * float64(item.Quantity)
-	}
-	order.TotalAmount = total
-	order.UpdatedAt = time.Now()
-
-	_, err = doc.Ref.Set(ctx, order)
-	if err != nil {
-		http.Error(w, "Failed to update cart", http.StatusInternalServerError)
+	if _, err := cartRef.Set(ctx, cart); err != nil {
+		http.Error(w, "failed to update cart", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(order)
+	json.NewEncoder(w).Encode(cart)
 }

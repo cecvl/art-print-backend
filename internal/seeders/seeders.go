@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	"firebase.google.com/go/auth"
@@ -28,6 +29,33 @@ type User struct {
 	Avatar      string `json:"Avatar"`
 }
 
+// CartItem and Cart models (match internal/models)
+type CartItem struct {
+	ArtworkID string  `json:"artworkId"`
+	Quantity  int     `json:"quantity"`
+	Price     float64 `json:"price"`
+}
+
+type Cart struct {
+	BuyerID   string     `json:"buyerId"`
+	Items     []CartItem `json:"items"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+}
+
+// Order model for seeding orders (match internal/models)
+type Order struct {
+	OrderID       string     `json:"orderId"`
+	BuyerID       string     `json:"buyerId"`
+	PrintShopID   string     `json:"printShopId"`
+	Items         []CartItem `json:"items"`
+	TotalAmount   float64    `json:"totalAmount"`
+	PaymentMethod string     `json:"paymentMethod"`
+	TransactionID string     `json:"transactionId"`
+	Status        string     `json:"status"`
+	CreatedAt     time.Time  `json:"createdAt"`
+	UpdatedAt     time.Time  `json:"updatedAt"`
+}
+
 // SeedArtworks loads artworks.json and writes them to Firestore
 func SeedArtworks(ctx context.Context, client *firestore.Client) error {
 	data, err := os.ReadFile("internal/seeders/artworks.json")
@@ -48,7 +76,6 @@ func SeedArtworks(ctx context.Context, client *firestore.Client) error {
 		}
 		log.Printf("✅ Seeded artwork: %s", art.Title)
 	}
-
 	return nil
 }
 
@@ -65,7 +92,6 @@ func SeedUsers(ctx context.Context, authClient *auth.Client, fsClient *firestore
 	}
 
 	for _, u := range users {
-		// Create user in Firebase Auth
 		params := (&auth.UserToCreate{}).
 			Email(u.Email).
 			Password(u.Password).
@@ -77,7 +103,6 @@ func SeedUsers(ctx context.Context, authClient *auth.Client, fsClient *firestore
 			continue
 		}
 
-		// Create corresponding Firestore profile
 		profile := map[string]interface{}{
 			"uid":         userRecord.UID,
 			"displayName": u.DisplayName,
@@ -95,6 +120,51 @@ func SeedUsers(ctx context.Context, authClient *auth.Client, fsClient *firestore
 
 		log.Printf("✅ Seeded user: %s (%s)", u.DisplayName, u.Email)
 	}
+	return nil
+}
 
+// SeedCarts loads carts.json and writes them to Firestore
+func SeedCarts(ctx context.Context, client *firestore.Client) error {
+	data, err := os.ReadFile("internal/seeders/carts.json")
+	if err != nil {
+		return fmt.Errorf("failed to read carts.json: %w", err)
+	}
+
+	var carts []Cart
+	if err := json.Unmarshal(data, &carts); err != nil {
+		return fmt.Errorf("failed to parse carts.json: %w", err)
+	}
+
+	for _, cart := range carts {
+		_, err := client.Collection("carts").Doc(cart.BuyerID).Set(ctx, cart)
+		if err != nil {
+			log.Printf("❌ Failed to seed cart for buyer %s: %v", cart.BuyerID, err)
+			continue
+		}
+		log.Printf("✅ Seeded cart for buyer: %s", cart.BuyerID)
+	}
+	return nil
+}
+
+// SeedOrders loads orders.json and writes them to Firestore
+func SeedOrders(ctx context.Context, client *firestore.Client) error {
+	data, err := os.ReadFile("internal/seeders/orders.json")
+	if err != nil {
+		return fmt.Errorf("failed to read orders.json: %w", err)
+	}
+
+	var orders []Order
+	if err := json.Unmarshal(data, &orders); err != nil {
+		return fmt.Errorf("failed to parse orders.json: %w", err)
+	}
+
+	for _, order := range orders {
+		_, err := client.Collection("orders").Doc(order.OrderID).Set(ctx, order)
+		if err != nil {
+			log.Printf("❌ Failed to seed order %s: %v", order.OrderID, err)
+			continue
+		}
+		log.Printf("✅ Seeded order: %s", order.OrderID)
+	}
 	return nil
 }

@@ -14,72 +14,81 @@ import (
 	"github.com/cecvl/art-print-backend/internal/seeders"
 )
 
-func main() {
-	// Determine environment
+// loadEnv loads the environment variables based on APP_ENV
+func loadEnv() string {
 	env := os.Getenv("APP_ENV")
 	if env == "" {
-		env = "dev" // default to development
+		env = "dev"
 	}
-
 	envPath := "configs/.env." + env
-
-	// Load the environment file
 	if err := godotenv.Load(envPath); err != nil {
-		log.Printf("⚠️ No %s found, relying on exported env vars", envPath)
+		log.Printf("⚠️ No %s found, relying on system env vars", envPath)
 	} else {
 		log.Printf("✅ Loaded environment from %s", envPath)
 	}
-	// Initialize Firebase
+	return env
+}
+
+// runSeeders seeds demo data in development mode
+func runSeeders(env string) {
+	if env != "dev" {
+		return
+	}
+
+	ctx := context.Background()
+	log.Println("🌱 Seeding Firestore and Auth with demo data...")
+
+	if err := seeders.SeedUsers(ctx, firebase.AuthClient, firebase.FirestoreClient); err != nil {
+		log.Printf("⚠️ Seeder (users) error: %v", err)
+	}
+	if err := seeders.SeedArtworks(ctx, firebase.FirestoreClient); err != nil {
+		log.Printf("⚠️ Seeder (artworks) error: %v", err)
+	}
+	// if you have carts/orders seeders, add them here:
+	// if err := seeders.SeedCarts(...); err != nil { ... }
+	// if err := seeders.SeedOrders(...); err != nil { ... }
+}
+
+// setupRoutes initializes all routes
+func setupRoutes() http.Handler {
+	mux := http.NewServeMux()
+
+	// Public routes
+	mux.Handle("/signup", middleware.LogMiddleware(http.HandlerFunc(handlers.SignUpHandler)))
+	mux.Handle("/sessionLogin", middleware.LogMiddleware(http.HandlerFunc(handlers.SessionLoginHandler)))
+	mux.Handle("/sessionLogout", middleware.LogMiddleware(http.HandlerFunc(handlers.SessionLogoutHandler)))
+	mux.Handle("/artworks", middleware.LogMiddleware(http.HandlerFunc(handlers.GetArtworksHandler)))
+
+	// Authenticated routes
+	protected := middleware.AuthMiddleware
+	mux.Handle("/artworks/upload", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.UploadArtHandler))))
+	mux.Handle("/getprofile", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.GetProfileHandler))))
+	mux.Handle("/updateprofile", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.UpdateProfileHandler))))
+	mux.Handle("/cart/add", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.AddToCartHandler))))
+	mux.Handle("/cart/remove", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.RemoveFromCartHandler))))
+	mux.Handle("/cart", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.GetCartHandler))))
+	mux.Handle("/checkout", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.CheckoutHandler))))
+	mux.Handle("/orders", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.GetOrdersHandler))))
+
+	return middleware.CORS(mux)
+}
+
+func main() {
+	env := loadEnv()
+
 	if err := firebase.InitFirebase(); err != nil {
 		log.Fatalf("🔥 Firebase initialization failed: %v", err)
 	}
 	defer firebase.FirestoreClient.Close()
 
-	// Check Cloudinary secret presence
-	secret := os.Getenv("CLOUDINARY_API_SECRET")
-	if len(secret) == 0 {
-		log.Println("⚠️ CLOUDINARY_API_SECRET not set!")
-	} else {
-		log.Printf("🔐 CLOUDINARY_API_SECRET length: %d", len(secret))
-	}
-
-	// 🌱 Run seeders only in development
-	if env == "dev" {
-		log.Println("🌱 Seeding local Firestore and Auth with demo data...")
-
-		if err := seeders.SeedUsers(context.Background(), firebase.AuthClient, firebase.FirestoreClient); err != nil {
-			log.Printf("⚠️ Seeder (users) error: %v", err)
-		}
-
-		if err := seeders.SeedArtworks(context.Background(), firebase.FirestoreClient); err != nil {
-			log.Printf("⚠️ Seeder (artworks) error: %v", err)
-		}
-	}
-
-	mux := http.NewServeMux()
-
-	// Routes
-	mux.Handle("/signup", middleware.LogMiddleware(http.HandlerFunc(handlers.SignUpHandler)))
-	mux.Handle("/artworks/upload", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.UploadArtHandler))))
-	mux.Handle("/artworks", middleware.LogMiddleware(http.HandlerFunc(handlers.GetArtworksHandler)))
-	mux.Handle("/getprofile", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.GetProfileHandler))))
-	mux.Handle("/updateprofile", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.UpdateProfileHandler))))
-	mux.Handle("/sessionLogin", middleware.LogMiddleware(http.HandlerFunc(handlers.SessionLoginHandler)))
-	mux.Handle("/sessionLogout", middleware.LogMiddleware(http.HandlerFunc(handlers.SessionLogoutHandler)))
-	mux.Handle("/cart/add", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.AddToCartHandler))))
-	mux.Handle("/cart", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.GetCartHandler))))
-	mux.Handle("/cart/remove", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.RemoveFromCartHandler))))
-	mux.Handle("/checkout", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.CheckoutHandler))))
-	mux.Handle("/orders", middleware.LogMiddleware(middleware.AuthMiddleware(http.HandlerFunc(handlers.GetOrdersHandler))))
-
-	// Apply CORS middleware
-	handlerWithCORS := middleware.CORS(mux)
+	runSeeders(env)
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3001"
 	}
 
+	handler := setupRoutes()
 	log.Printf("🚀 Server running in %s mode on :%s", env, port)
-	log.Fatal(http.ListenAndServe(":"+port, handlerWithCORS))
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }

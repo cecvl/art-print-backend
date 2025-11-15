@@ -56,6 +56,26 @@ type Order struct {
 	UpdatedAt     time.Time  `json:"updatedAt"`
 }
 
+// Print Shop
+type PrintShopSeed struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Location     string `json:"location"`
+	ContactEmail string `json:"contactEmail"`
+}
+
+// Shop-specific print options
+type PrintOptionSeed struct {
+	PrintShopID string                   `json:"shopId"`
+	Options     []map[string]interface{} `json:"options"`
+}
+
+// Shop-specific pricing
+type PricingSeed struct {
+	PrintShopID string                   `json:"shopId"`
+	Pricing     []map[string]interface{} `json:"pricing"`
+}
+
 // SeedArtworks loads artworks.json and writes them to Firestore
 func SeedArtworks(ctx context.Context, client *firestore.Client) error {
 	data, err := os.ReadFile("internal/seeders/artworks.json")
@@ -165,6 +185,107 @@ func SeedOrders(ctx context.Context, client *firestore.Client) error {
 			continue
 		}
 		log.Printf("✅ Seeded order: %s", order.OrderID)
+	}
+	return nil
+}
+
+// SeedPrintShops loads printshops.json and writes them to Firestore
+func SeedPrintShops(ctx context.Context, client *firestore.Client) error {
+	data, err := os.ReadFile("internal/seeders/printshops.json")
+	if err != nil {
+		return fmt.Errorf("failed to read printshops.json: %w", err)
+	}
+
+	var shops []PrintShopSeed
+	if err := json.Unmarshal(data, &shops); err != nil {
+		return fmt.Errorf("failed to parse printshops.json: %w", err)
+	}
+
+	for _, shop := range shops {
+		ref := client.Collection("printshops").Doc(shop.ID)
+
+		if doc, _ := ref.Get(ctx); doc.Exists() {
+			continue
+		}
+
+		_, err := ref.Set(ctx, shop)
+		if err != nil {
+			log.Printf("❌ Failed to seed print shop %s: %v", shop.ID, err)
+			continue
+		}
+		log.Printf("✅ Seeded print shop: %s", shop.Name)
+	}
+	return nil
+}
+
+// SeedPrintOptions loads printoptions.json and writes them to Firestore
+func SeedPrintOptions(ctx context.Context, client *firestore.Client) error {
+	data, err := os.ReadFile("internal/seeders/printoptions.json")
+	if err != nil {
+		return fmt.Errorf("failed to read printoptions.json: %w", err)
+	}
+
+	var entries []PrintOptionSeed
+	if err := json.Unmarshal(data, &entries); err != nil {
+		return fmt.Errorf("failed to parse printoptions.json: %w", err)
+	}
+
+	for _, entry := range entries {
+		for _, opt := range entry.Options {
+			optID := opt["id"].(string)
+
+			ref := client.Collection("printshops").
+				Doc(entry.PrintShopID).
+				Collection("printoptions").
+				Doc(optID)
+
+			if doc, _ := ref.Get(ctx); doc.Exists() {
+				continue
+			}
+
+			_, err := ref.Set(ctx, opt)
+			if err != nil {
+				log.Printf("❌ Failed to seed option %s for shop %s: %v", optID, entry.PrintShopID, err)
+				continue
+			}
+			log.Printf("✅ Seeded print option: %s for shop %s", optID, entry.PrintShopID)
+		}
+	}
+	return nil
+}
+
+// SeedPricing loads pricing.json and writes them to Firestore
+func SeedPricing(ctx context.Context, client *firestore.Client) error {
+	data, err := os.ReadFile("internal/seeders/pricing.json")
+	if err != nil {
+		return fmt.Errorf("failed to read pricing.json: %w", err)
+	}
+
+	var entries []PricingSeed
+	if err := json.Unmarshal(data, &entries); err != nil {
+		return fmt.Errorf("failed to parse pricing.json: %w", err)
+	}
+
+	for _, entry := range entries {
+		for _, price := range entry.Pricing {
+			optionID := price["optionId"].(string)
+
+			ref := client.Collection("printshops").
+				Doc(entry.PrintShopID).
+				Collection("pricing").
+				Doc(optionID)
+
+			if doc, _ := ref.Get(ctx); doc.Exists() {
+				continue
+			}
+
+			_, err := ref.Set(ctx, price)
+			if err != nil {
+				log.Printf("❌ Failed to seed pricing %s for shop %s: %v", optionID, entry.PrintShopID, err)
+				continue
+			}
+			log.Printf("✅ Seeded pricing: %s for shop %s", optionID, entry.PrintShopID)
+		}
 	}
 	return nil
 }

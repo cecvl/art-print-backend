@@ -8,7 +8,7 @@ Back-end for an art prints' sales platform
 
 - Go standard libs
 - `Cloudinary` for storage
-- `Firebase` as backend support, `firestore` as db(obviously lol)
+- `Firebase` as backend support, `firestore` as db
 
 ### Curl commands to test server
 
@@ -30,3 +30,18 @@ Back-end for an art prints' sales platform
 
 - curl -X GET http://localhost:3001/cart -H "Authorization: Bearer ID_TOKEN"
 - curl -X POST http://localhost:3001/checkout -H "Authorization: Bearer ID_TOKEN"
+
+# Make commands
+Run `make --version` to check installation
+##
+`make run` - run app server
+
+`make build` - build a binary file
+
+`make build-win`
+`make build-linux` - build for windows, linux
+
+`make seed` - seed json data
+
+`make emulators` - run firebase emulators
+

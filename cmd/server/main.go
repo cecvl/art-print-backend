@@ -53,11 +53,18 @@ func runSeeders(env string) {
 func setupRoutes() http.Handler {
 	mux := http.NewServeMux()
 
+	//Implement printshop handlers
+	printOptionsHandler := handlers.NewPrintOptionsHandler()
+	pricingHandler := handlers.NewPricingHandler()
+
 	// Public routes
 	mux.Handle("/signup", middleware.LogMiddleware(http.HandlerFunc(handlers.SignUpHandler)))
 	mux.Handle("/sessionLogin", middleware.LogMiddleware(http.HandlerFunc(handlers.SessionLoginHandler)))
 	mux.Handle("/sessionLogout", middleware.LogMiddleware(http.HandlerFunc(handlers.SessionLogoutHandler)))
 	mux.Handle("/artworks", middleware.LogMiddleware(http.HandlerFunc(handlers.GetArtworksHandler)))
+
+	// Print options route
+	mux.Handle("/print-options", middleware.LogMiddleware(http.HandlerFunc(printOptionsHandler.GetPrintOptions)))
 
 	// Authenticated routes
 	protected := middleware.AuthMiddleware
@@ -69,7 +76,8 @@ func setupRoutes() http.Handler {
 	mux.Handle("/cart", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.GetCartHandler))))
 	mux.Handle("/checkout", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.CheckoutHandler))))
 	mux.Handle("/orders", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.GetOrdersHandler))))
-
+	//calculate price
+	mux.Handle("/calculate-price", middleware.LogMiddleware(protected(http.HandlerFunc(pricingHandler.CalculatePrice))))
 	return middleware.CORS(mux)
 }
 

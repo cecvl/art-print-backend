@@ -1,0 +1,35 @@
+# Cloud Build configuration for running seed job
+# This can be used as a Cloud Run Job or Cloud Build step
+
+steps:
+  # Pull the seed image (assumes it's already built and pushed)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'pull-seed'
+    args:
+      - 'pull'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/seed:${SHORT_SHA}'
+    waitFor: ['-']
+
+  # Run the seed container
+  - name: '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/seed:${SHORT_SHA}'
+    id: 'run-seed'
+    env:
+      - 'APP_ENV=${_APP_ENV}'
+      - 'GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json'
+      - 'FIREBASE_PROJECT_ID=${PROJECT_ID}'
+    waitFor: ['pull-seed']
+
+# Substitutions
+substitutions:
+  _REGION: 'us-central1'
+  _REPO_NAME: 'art-print-backend'
+  _APP_ENV: 'production'
+
+# Options
+options:
+  machineType: 'E2_HIGHCPU_4'
+  logging: CLOUD_LOGGING_ONLY
+
+# Timeout
+timeout: '600s'
+

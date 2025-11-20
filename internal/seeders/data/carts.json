@@ -1,0 +1,19 @@
+[
+  {
+    "buyerId": "buyer1",
+    "items": [
+      {
+        "artworkId": "artwork1",
+        "quantity": 2,
+        "price": 1500.00
+      },
+      {
+        "artworkId": "artwork2",
+        "quantity": 1,
+        "price": 2000.00
+      }
+    ],
+    "updatedAt": "2024-01-15T10:30:00Z"
+  }
+]
+

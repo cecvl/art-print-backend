@@ -1,0 +1,33 @@
+[
+  {
+    "Title": "Sunset Over Mountains",
+    "Description": "A beautiful landscape painting capturing the golden hour over mountain peaks.",
+    "ImageURL": "https://example.com/artworks/sunset-mountains.jpg",
+    "ArtistID": "artist1"
+  },
+  {
+    "Title": "Abstract Dreams",
+    "Description": "Vibrant abstract composition exploring color and form.",
+    "ImageURL": "https://example.com/artworks/abstract-dreams.jpg",
+    "ArtistID": "artist1"
+  },
+  {
+    "Title": "Urban Life",
+    "Description": "Street photography capturing the essence of city living.",
+    "ImageURL": "https://example.com/artworks/urban-life.jpg",
+    "ArtistID": "artist2"
+  },
+  {
+    "Title": "Ocean Waves",
+    "Description": "Serene seascape with crashing waves and dramatic skies.",
+    "ImageURL": "https://example.com/artworks/ocean-waves.jpg",
+    "ArtistID": "artist2"
+  },
+  {
+    "Title": "Floral Arrangement",
+    "Description": "Delicate watercolor painting of spring flowers.",
+    "ImageURL": "https://example.com/artworks/floral.jpg",
+    "ArtistID": "artist1"
+  }
+]
+

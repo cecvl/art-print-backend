@@ -54,6 +54,9 @@ func setupRoutes() http.Handler {
 	printOptionsHandler := handlers.NewPrintOptionsHandler()
 	pricingHandler := handlers.NewPricingHandler()
 
+	// Health check route (no logging middleware for efficiency)
+	mux.Handle("/health", http.HandlerFunc(handlers.HealthHandler))
+
 	// Public routes
 	mux.Handle("/signup", middleware.LogMiddleware(http.HandlerFunc(handlers.SignUpHandler)))
 	mux.Handle("/sessionLogin", middleware.LogMiddleware(http.HandlerFunc(handlers.SessionLoginHandler)))

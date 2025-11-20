@@ -2,15 +2,36 @@ package seeders
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"cloud.google.com/go/firestore"
 	"firebase.google.com/go/auth"
 )
+
+//go:embed data/users.json
+var usersData []byte
+
+//go:embed data/artworks.json
+var artworksData []byte
+
+//go:embed data/carts.json
+var cartsData []byte
+
+//go:embed data/orders.json
+var ordersData []byte
+
+//go:embed data/printshops.json
+var printshopsData []byte
+
+//go:embed data/printoptions.json
+var printoptionsData []byte
+
+//go:embed data/pricing.json
+var pricingData []byte
 
 // Artwork model for seeding artworks
 type Artwork struct {
@@ -76,16 +97,11 @@ type PricingSeed struct {
 	Pricing     []map[string]interface{} `json:"pricing"`
 }
 
-// SeedArtworks loads artworks.json and writes them to Firestore
+// SeedArtworks loads embedded artworks data and writes them to Firestore
 func SeedArtworks(ctx context.Context, client *firestore.Client) error {
-	data, err := os.ReadFile("internal/seeders/artworks.json")
-	if err != nil {
-		return fmt.Errorf("failed to read artworks.json: %w", err)
-	}
-
 	var artworks []Artwork
-	if err := json.Unmarshal(data, &artworks); err != nil {
-		return fmt.Errorf("failed to parse artworks.json: %w", err)
+	if err := json.Unmarshal(artworksData, &artworks); err != nil {
+		return fmt.Errorf("failed to parse artworks data: %w", err)
 	}
 
 	for _, art := range artworks {
@@ -99,16 +115,11 @@ func SeedArtworks(ctx context.Context, client *firestore.Client) error {
 	return nil
 }
 
-// SeedUsers loads users.json, creates Auth accounts and Firestore profiles
+// SeedUsers loads embedded users data, creates Auth accounts and Firestore profiles
 func SeedUsers(ctx context.Context, authClient *auth.Client, fsClient *firestore.Client) error {
-	data, err := os.ReadFile("internal/seeders/users.json")
-	if err != nil {
-		return fmt.Errorf("failed to read users.json: %w", err)
-	}
-
 	var users []User
-	if err := json.Unmarshal(data, &users); err != nil {
-		return fmt.Errorf("failed to parse users.json: %w", err)
+	if err := json.Unmarshal(usersData, &users); err != nil {
+		return fmt.Errorf("failed to parse users data: %w", err)
 	}
 
 	for _, u := range users {
@@ -143,16 +154,11 @@ func SeedUsers(ctx context.Context, authClient *auth.Client, fsClient *firestore
 	return nil
 }
 
-// SeedCarts loads carts.json and writes them to Firestore
+// SeedCarts loads embedded carts data and writes them to Firestore
 func SeedCarts(ctx context.Context, client *firestore.Client) error {
-	data, err := os.ReadFile("internal/seeders/carts.json")
-	if err != nil {
-		return fmt.Errorf("failed to read carts.json: %w", err)
-	}
-
 	var carts []Cart
-	if err := json.Unmarshal(data, &carts); err != nil {
-		return fmt.Errorf("failed to parse carts.json: %w", err)
+	if err := json.Unmarshal(cartsData, &carts); err != nil {
+		return fmt.Errorf("failed to parse carts data: %w", err)
 	}
 
 	for _, cart := range carts {
@@ -166,16 +172,11 @@ func SeedCarts(ctx context.Context, client *firestore.Client) error {
 	return nil
 }
 
-// SeedOrders loads orders.json and writes them to Firestore
+// SeedOrders loads embedded orders data and writes them to Firestore
 func SeedOrders(ctx context.Context, client *firestore.Client) error {
-	data, err := os.ReadFile("internal/seeders/orders.json")
-	if err != nil {
-		return fmt.Errorf("failed to read orders.json: %w", err)
-	}
-
 	var orders []Order
-	if err := json.Unmarshal(data, &orders); err != nil {
-		return fmt.Errorf("failed to parse orders.json: %w", err)
+	if err := json.Unmarshal(ordersData, &orders); err != nil {
+		return fmt.Errorf("failed to parse orders data: %w", err)
 	}
 
 	for _, order := range orders {
@@ -189,16 +190,11 @@ func SeedOrders(ctx context.Context, client *firestore.Client) error {
 	return nil
 }
 
-// SeedPrintShops loads printshops.json and writes them to Firestore
+// SeedPrintShops loads embedded printshops data and writes them to Firestore
 func SeedPrintShops(ctx context.Context, client *firestore.Client) error {
-	data, err := os.ReadFile("internal/seeders/printshops.json")
-	if err != nil {
-		return fmt.Errorf("failed to read printshops.json: %w", err)
-	}
-
 	var shops []PrintShopSeed
-	if err := json.Unmarshal(data, &shops); err != nil {
-		return fmt.Errorf("failed to parse printshops.json: %w", err)
+	if err := json.Unmarshal(printshopsData, &shops); err != nil {
+		return fmt.Errorf("failed to parse printshops data: %w", err)
 	}
 
 	for _, shop := range shops {
@@ -218,16 +214,11 @@ func SeedPrintShops(ctx context.Context, client *firestore.Client) error {
 	return nil
 }
 
-// SeedPrintOptions loads printoptions.json and writes them to Firestore
+// SeedPrintOptions loads embedded printoptions data and writes them to Firestore
 func SeedPrintOptions(ctx context.Context, client *firestore.Client) error {
-	data, err := os.ReadFile("internal/seeders/printoptions.json")
-	if err != nil {
-		return fmt.Errorf("failed to read printoptions.json: %w", err)
-	}
-
 	var entries []PrintOptionSeed
-	if err := json.Unmarshal(data, &entries); err != nil {
-		return fmt.Errorf("failed to parse printoptions.json: %w", err)
+	if err := json.Unmarshal(printoptionsData, &entries); err != nil {
+		return fmt.Errorf("failed to parse printoptions data: %w", err)
 	}
 
 	for _, entry := range entries {
@@ -254,16 +245,11 @@ func SeedPrintOptions(ctx context.Context, client *firestore.Client) error {
 	return nil
 }
 
-// SeedPricing loads pricing.json and writes them to Firestore
+// SeedPricing loads embedded pricing data and writes them to Firestore
 func SeedPricing(ctx context.Context, client *firestore.Client) error {
-	data, err := os.ReadFile("internal/seeders/pricing.json")
-	if err != nil {
-		return fmt.Errorf("failed to read pricing.json: %w", err)
-	}
-
 	var entries []PricingSeed
-	if err := json.Unmarshal(data, &entries); err != nil {
-		return fmt.Errorf("failed to parse pricing.json: %w", err)
+	if err := json.Unmarshal(pricingData, &entries); err != nil {
+		return fmt.Errorf("failed to parse pricing data: %w", err)
 	}
 
 	for _, entry := range entries {

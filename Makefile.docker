@@ -1,0 +1,78 @@
+# Docker-related Makefile targets
+# Extends the main Makefile with Docker commands
+
+.PHONY: docker-build-server docker-build-seed docker-build-all
+.PHONY: docker-run-server docker-run-seed docker-compose-up docker-compose-down
+.PHONY: docker-push-server docker-push-seed
+
+# Docker build targets
+docker-build-server:
+	@echo "🐳 Building server Docker image..."
+	docker build -f Dockerfile.server -t art-print-server:latest .
+
+docker-build-seed:
+	@echo "🐳 Building seed Docker image..."
+	docker build -f Dockerfile.seed -t art-print-seed:latest .
+
+docker-build-all: docker-build-server docker-build-seed
+	@echo "✅ All Docker images built successfully"
+
+# Docker run targets
+docker-run-server:
+	@echo "🚀 Running server container..."
+	docker run -p 3001:3001 \
+		-e APP_ENV=dev \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json \
+		-v $(PWD)/configs:/app/configs:ro \
+		-v $(PWD)/firebase-service-account.json:/app/configs/firebase-service-account.json:ro \
+		art-print-server:latest
+
+docker-run-seed:
+	@echo "🌱 Running seed container..."
+	docker run --rm \
+		-e APP_ENV=dev \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json \
+		-v $(PWD)/configs:/app/configs:ro \
+		-v $(PWD)/firebase-service-account.json:/app/configs/firebase-service-account.json:ro \
+		art-print-seed:latest
+
+# Docker Compose targets
+docker-compose-up:
+	@echo "🐳 Starting services with Docker Compose..."
+	docker-compose up
+
+docker-compose-down:
+	@echo "🛑 Stopping Docker Compose services..."
+	docker-compose down
+
+docker-compose-build:
+	@echo "🏗️  Building Docker Compose images..."
+	docker-compose build
+
+# GCP deployment targets (requires gcloud CLI)
+docker-push-server:
+	@echo "📤 Pushing server image to GCP..."
+	@if [ -z "$(PROJECT_ID)" ] || [ -z "$(REGION)" ] || [ -z "$(REPO_NAME)" ]; then \
+		echo "❌ Error: PROJECT_ID, REGION, and REPO_NAME must be set"; \
+		exit 1; \
+	fi
+	docker tag art-print-server:latest $(REGION)-docker.pkg.dev/$(PROJECT_ID)/$(REPO_NAME)/server:latest
+	docker push $(REGION)-docker.pkg.dev/$(PROJECT_ID)/$(REPO_NAME)/server:latest
+
+docker-push-seed:
+	@echo "📤 Pushing seed image to GCP..."
+	@if [ -z "$(PROJECT_ID)" ] || [ -z "$(REGION)" ] || [ -z "$(REPO_NAME)" ]; then \
+		echo "❌ Error: PROJECT_ID, REGION, and REPO_NAME must be set"; \
+		exit 1; \
+	fi
+	docker tag art-print-seed:latest $(REGION)-docker.pkg.dev/$(PROJECT_ID)/$(REPO_NAME)/seed:latest
+	docker push $(REGION)-docker.pkg.dev/$(PROJECT_ID)/$(REPO_NAME)/seed:latest
+
+docker-push-all: docker-push-server docker-push-seed
+	@echo "✅ All images pushed to GCP"
+
+# Example usage:
+# make docker-build-all
+# make docker-compose-up
+# PROJECT_ID=my-project REGION=us-central1 REPO_NAME=art-print-backend make docker-push-all
+

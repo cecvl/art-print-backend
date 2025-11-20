@@ -2,6 +2,9 @@
 .env
 .env.*
 
+# Docker Compose override (contains local config)
+docker-compose.override.yml
+
 # Firebase emulator state (can be regenerated)
 .dataconnect/
 .firebaserc
@@ -22,8 +25,12 @@ bin/
 .DS_Store
 
 *.log
-*.json
 *.rules
 art-print-backend
+
+# Allow seed data JSON files (they're embedded in the binary)
+!internal/seeders/data/*.json
+
+configs/
 
 *.gql

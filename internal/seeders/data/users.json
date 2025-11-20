@@ -1,0 +1,31 @@
+[
+  {
+    "Email": "artist1@example.com",
+    "Password": "SecurePass123!",
+    "DisplayName": "Jane Artist",
+    "Role": "artist",
+    "Avatar": "https://example.com/avatars/jane.jpg"
+  },
+  {
+    "Email": "buyer1@example.com",
+    "Password": "SecurePass123!",
+    "DisplayName": "John Buyer",
+    "Role": "buyer",
+    "Avatar": "https://example.com/avatars/john.jpg"
+  },
+  {
+    "Email": "printshop1@example.com",
+    "Password": "SecurePass123!",
+    "DisplayName": "Print Shop Pro",
+    "Role": "printShop",
+    "Avatar": "https://example.com/avatars/shop.jpg"
+  },
+  {
+    "Email": "artist2@example.com",
+    "Password": "SecurePass123!",
+    "DisplayName": "Maria Painter",
+    "Role": "artist",
+    "Avatar": "https://example.com/avatars/maria.jpg"
+  }
+]
+

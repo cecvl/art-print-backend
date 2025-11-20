@@ -1,0 +1,39 @@
+[
+  {
+    "orderId": "order-001",
+    "buyerId": "buyer1",
+    "printShopId": "shop1",
+    "items": [
+      {
+        "artworkId": "artwork1",
+        "quantity": 2,
+        "price": 1500.00
+      }
+    ],
+    "totalAmount": 3000.00,
+    "paymentMethod": "credit_card",
+    "transactionId": "txn-001",
+    "status": "pending",
+    "createdAt": "2024-01-10T08:00:00Z",
+    "updatedAt": "2024-01-10T08:00:00Z"
+  },
+  {
+    "orderId": "order-002",
+    "buyerId": "buyer1",
+    "printShopId": "shop1",
+    "items": [
+      {
+        "artworkId": "artwork2",
+        "quantity": 1,
+        "price": 2000.00
+      }
+    ],
+    "totalAmount": 2000.00,
+    "paymentMethod": "paypal",
+    "transactionId": "txn-002",
+    "status": "completed",
+    "createdAt": "2024-01-08T14:30:00Z",
+    "updatedAt": "2024-01-09T10:15:00Z"
+  }
+]
+

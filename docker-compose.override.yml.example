@@ -1,0 +1,12 @@
+# Example override file for local development
+# Copy this to docker-compose.override.yml and set your values
+# docker-compose automatically uses override files
+
+version: '3.8'
+
+services:
+  server:
+    environment:
+      - FIREBASE_PROJECT_ID=your-actual-project-id-here
+    # Add any other overrides you need
+

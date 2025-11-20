@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Server service
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: art-print-server
+    ports:
+      - "3001:3001"
+    environment:
+      - APP_ENV=${APP_ENV:-dev}
+      - PORT=3001
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIRESTORE_EMULATOR_HOST=${FIRESTORE_EMULATOR_HOST:-}
+      - FIREBASE_AUTH_EMULATOR_HOST=${FIREBASE_AUTH_EMULATOR_HOST:-}
+    volumes:
+      # Mount configs directory (includes .env files and firebase-service-account.json symlink)
+      # The firebase-service-account.json file is in root, but symlinked in configs/
+      - ./configs:/app/configs:ro
+    networks:
+      - art-print-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Seed service (runs once and exits)
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile.seed
+    container_name: art-print-seed
+    environment:
+      - APP_ENV=${APP_ENV:-dev}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIRESTORE_EMULATOR_HOST=${FIRESTORE_EMULATOR_HOST:-}
+      - FIREBASE_AUTH_EMULATOR_HOST=${FIREBASE_AUTH_EMULATOR_HOST:-}
+    volumes:
+      # Mount configs directory (includes .env files and firebase-service-account.json symlink)
+      - ./configs:/app/configs:ro
+    networks:
+      - art-print-network
+    profiles:
+      - seed  # Only run when explicitly requested
+    restart: "no"
+    # Seed container exits after completion - this is expected
+
+  # Firebase Emulator (optional, for local development)
+  firebase-emulator:
+    image: node:20-alpine
+    container_name: firebase-emulator
+    working_dir: /app
+    command: sh -c "npm install -g firebase-tools && firebase emulators:start"
+    ports:
+      - "4000:4000"  # UI
+      - "8080:8080"  # Firestore
+      - "9099:9099"  # Auth
+    volumes:
+      - ./firebase.json:/app/firebase.json:ro
+      - ./firebase-service-account.json:/app/firebase-service-account.json:ro
+      - emulator-data:/app/emulator_data
+    networks:
+      - art-print-network
+    profiles:
+      - emulator
+    environment:
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+
+networks:
+  art-print-network:
+    driver: bridge
+
+volumes:
+  emulator-data:
+

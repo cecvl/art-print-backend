@@ -1,0 +1,64 @@
+version: '3.8'
+
+# Development docker-compose with Firebase emulator
+# Usage: docker-compose -f docker-compose.dev.yml up
+
+services:
+  # Firebase Emulator (must start first)
+  firebase-emulator:
+    image: node:20-alpine
+    container_name: firebase-emulator
+    working_dir: /app
+    command: sh -c "npm install -g firebase-tools && firebase emulators:start"
+    ports:
+      - "4000:4000"  # UI
+      - "8080:8080"  # Firestore
+      - "9099:9099"  # Auth
+    volumes:
+      - ./firebase.json:/app/firebase.json:ro
+      - emulator-data:/app/emulator_data
+    networks:
+      - art-print-network
+    environment:
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-demo-project}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Server service (waits for emulator)
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: art-print-server
+    ports:
+      - "3001:3001"
+    environment:
+      - APP_ENV=dev
+      - PORT=3001
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-demo-project}
+      - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
+      - FIREBASE_AUTH_EMULATOR_HOST=http://firebase-emulator:9099
+    networks:
+      - art-print-network
+    depends_on:
+      firebase-emulator:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  art-print-network:
+    driver: bridge
+
+volumes:
+  emulator-data:
+

@@ -1,0 +1,61 @@
+[
+  {
+    "shopId": "shop1",
+    "pricing": [
+      {
+        "optionId": "canvas-8x10",
+        "basePrice": 29.99,
+        "currency": "USD",
+        "unit": "per print"
+      },
+      {
+        "optionId": "canvas-16x20",
+        "basePrice": 59.99,
+        "currency": "USD",
+        "unit": "per print"
+      },
+      {
+        "optionId": "paper-8x10",
+        "basePrice": 9.99,
+        "currency": "USD",
+        "unit": "per print"
+      },
+      {
+        "optionId": "paper-11x14",
+        "basePrice": 14.99,
+        "currency": "USD",
+        "unit": "per print"
+      },
+      {
+        "optionId": "metal-12x16",
+        "basePrice": 79.99,
+        "currency": "USD",
+        "unit": "per print"
+      }
+    ]
+  },
+  {
+    "shopId": "shop2",
+    "pricing": [
+      {
+        "optionId": "canvas-8x10",
+        "basePrice": 27.99,
+        "currency": "USD",
+        "unit": "per print"
+      },
+      {
+        "optionId": "canvas-20x24",
+        "basePrice": 89.99,
+        "currency": "USD",
+        "unit": "per print"
+      },
+      {
+        "optionId": "paper-8x10",
+        "basePrice": 8.99,
+        "currency": "USD",
+        "unit": "per print"
+      }
+    ]
+  }
+]
+

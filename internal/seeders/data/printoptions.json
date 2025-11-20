@@ -1,0 +1,69 @@
+[
+  {
+    "shopId": "shop1",
+    "options": [
+      {
+        "id": "canvas-8x10",
+        "name": "Canvas Print 8x10",
+        "material": "canvas",
+        "size": "8x10",
+        "description": "Premium canvas print"
+      },
+      {
+        "id": "canvas-16x20",
+        "name": "Canvas Print 16x20",
+        "material": "canvas",
+        "size": "16x20",
+        "description": "Premium canvas print"
+      },
+      {
+        "id": "paper-8x10",
+        "name": "Paper Print 8x10",
+        "material": "paper",
+        "size": "8x10",
+        "description": "High-quality paper print"
+      },
+      {
+        "id": "paper-11x14",
+        "name": "Paper Print 11x14",
+        "material": "paper",
+        "size": "11x14",
+        "description": "High-quality paper print"
+      },
+      {
+        "id": "metal-12x16",
+        "name": "Metal Print 12x16",
+        "material": "metal",
+        "size": "12x16",
+        "description": "Durable metal print"
+      }
+    ]
+  },
+  {
+    "shopId": "shop2",
+    "options": [
+      {
+        "id": "canvas-8x10",
+        "name": "Canvas Print 8x10",
+        "material": "canvas",
+        "size": "8x10",
+        "description": "Premium canvas print"
+      },
+      {
+        "id": "canvas-20x24",
+        "name": "Canvas Print 20x24",
+        "material": "canvas",
+        "size": "20x24",
+        "description": "Large canvas print"
+      },
+      {
+        "id": "paper-8x10",
+        "name": "Paper Print 8x10",
+        "material": "paper",
+        "size": "8x10",
+        "description": "High-quality paper print"
+      }
+    ]
+  }
+]
+

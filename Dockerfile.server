@@ -1,0 +1,58 @@
+# Multi-stage build for server module - optimized for GCP deployment
+# Stage 1: Build stage
+FROM golang:1.23-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates tzdata
+
+# Set working directory
+WORKDIR /build
+
+# Copy go mod files first for better layer caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the server binary with optimizations
+# CGO_ENABLED=0 creates a static binary
+# -ldflags="-w -s" strips debug info to reduce size
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s -extldflags '-static'" \
+    -o /app/server \
+    ./cmd/server
+
+# Stage 2: Runtime stage - minimal alpine image (better for health checks)
+FROM alpine:3.19
+
+# Install ca-certificates for HTTPS, timezone data, and wget for health checks
+RUN apk --no-cache add ca-certificates tzdata wget && \
+    addgroup -g 1000 -S appuser && \
+    adduser -u 1000 -S appuser -G appuser
+
+# Copy timezone data
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+# Copy the binary
+COPY --from=builder /app/server /app/server
+
+# Create configs directory (will be mounted as volume)
+RUN mkdir -p /app/configs
+
+# Set working directory
+WORKDIR /app
+
+# Use non-root user
+USER appuser
+
+# Expose port
+EXPOSE 3001
+
+# Health check (simple TCP check - adjust based on your health endpoint)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+# Run the server
+ENTRYPOINT ["/app/server"]
+

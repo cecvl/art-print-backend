@@ -2,7 +2,6 @@ package seeders
 
 import (
 	"context"
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,26 +11,16 @@ import (
 	"firebase.google.com/go/auth"
 )
 
-//go:embed data/users.json
-var usersData []byte
-
-//go:embed data/artworks.json
-var artworksData []byte
-
-//go:embed data/carts.json
-var cartsData []byte
-
-//go:embed data/orders.json
-var ordersData []byte
-
-//go:embed data/printshops.json
-var printshopsData []byte
-
-//go:embed data/printoptions.json
-var printoptionsData []byte
-
-//go:embed data/pricing.json
-var pricingData []byte
+// Initialize data as empty slices - no embedded files needed
+var (
+	usersData        []byte = []byte("[]")
+	artworksData     []byte = []byte("[]")
+	cartsData        []byte = []byte("[]")
+	ordersData       []byte = []byte("[]")
+	printshopsData   []byte = []byte("[]")
+	printoptionsData []byte = []byte("[]")
+	pricingData      []byte = []byte("[]")
+)
 
 // Artwork model for seeding artworks
 type Artwork struct {

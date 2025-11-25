@@ -17,9 +17,13 @@ services:
       - PORT=3001
       - GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      # Cloudinary configuration (set via environment variables or .env file)
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     volumes:
+      # Mount configs directory (includes .env files and firebase-service-account.json symlink)
       - ./configs:/app/configs:ro
-      - ./firebase-service-account.json:/app/configs/firebase-service-account.json:ro
     restart: always
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]

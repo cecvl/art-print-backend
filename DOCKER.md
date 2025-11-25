@@ -32,19 +32,54 @@ Default Dockerfile that builds the server (for backward compatibility)
 docker-compose --profile emulator up
 ```
 
-2. **Run server only**:
+2. **Run server only** (connects to Firebase and Cloudinary):
 ```bash
 docker-compose up server
 ```
+Note: Ensure your Cloudinary credentials are set in `configs/.env.dev` or `docker-compose.override.yml`:
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
 
 3. **Run seed job**:
 ```bash
 docker-compose --profile seed run seed
 ```
 
-4. **Production-like setup**:
+4. **Production-like setup** (no seed data, production environment):
 ```bash
+# Ensure configs directory and symlink are set up
+./setup-configs.sh
+
+# Set your Firebase project ID
+export FIREBASE_PROJECT_ID=cloudinary-trial
+
+# Set Cloudinary credentials (or use configs/.env.production)
+export CLOUDINARY_CLOUD_NAME=your-cloud-name
+export CLOUDINARY_API_KEY=your-api-key
+export CLOUDINARY_API_SECRET=your-api-secret
+
+# Run production-like setup
 docker-compose -f docker-compose.prod.yml up
+
+# Or run in background
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+**Note**: Seed data will NOT run automatically (only runs when `APP_ENV=dev`). The server will connect to:
+- ✅ Firebase (production credentials)
+- ✅ Cloudinary (from environment variables)
+
+### Quick Start Scripts
+
+**Development mode** (with seed data):
+```bash
+./run-server.sh
+```
+
+**Production-like mode** (no seed data):
+```bash
+./run-prod.sh
 ```
 
 ### Building Images Manually
@@ -56,20 +91,31 @@ docker build -f Dockerfile.server -t art-print-server:latest .
 # Build seed image
 docker build -f Dockerfile.seed -t art-print-seed:latest .
 
-# Run server container
+# Run server container (development)
 docker run -p 3001:3001 \
   -e APP_ENV=dev \
   -e GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json \
+  -e FIREBASE_PROJECT_ID=your-project-id \
   -v $(pwd)/configs:/app/configs:ro \
-  -v $(pwd)/firebase-service-account.json:/app/configs/firebase-service-account.json:ro \
+  art-print-server:latest
+
+# Run server container (production-like, no seed data)
+docker run -p 3001:3001 \
+  -e APP_ENV=production \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json \
+  -e FIREBASE_PROJECT_ID=your-project-id \
+  -e CLOUDINARY_CLOUD_NAME=your-cloud-name \
+  -e CLOUDINARY_API_KEY=your-api-key \
+  -e CLOUDINARY_API_SECRET=your-api-secret \
+  -v $(pwd)/configs:/app/configs:ro \
   art-print-server:latest
 
 # Run seed container
 docker run --rm \
   -e APP_ENV=dev \
   -e GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json \
+  -e FIREBASE_PROJECT_ID=your-project-id \
   -v $(pwd)/configs:/app/configs:ro \
-  -v $(pwd)/firebase-service-account.json:/app/configs/firebase-service-account.json:ro \
   art-print-seed:latest
 ```
 

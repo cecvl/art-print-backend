@@ -16,6 +16,10 @@ services:
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
       - FIRESTORE_EMULATOR_HOST=${FIRESTORE_EMULATOR_HOST:-}
       - FIREBASE_AUTH_EMULATOR_HOST=${FIREBASE_AUTH_EMULATOR_HOST:-}
+      # Cloudinary configuration (can also be set in .env files)
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-}
     volumes:
       # Mount configs directory (includes .env files and firebase-service-account.json symlink)
       # The firebase-service-account.json file is in root, but symlinked in configs/

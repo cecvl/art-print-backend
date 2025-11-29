@@ -36,6 +36,8 @@ type CartItem struct {
 	ArtworkID string  `firestore:"artworkId"`
 	Quantity  int     `firestore:"quantity"`
 	Price     float64 `firestore:"price"`
+	// Print options for this item (can be extracted from artwork or set by user)
+	PrintOptions PrintOrderOptions `firestore:"printOptions,omitempty"`
 }
 
 type Cart struct {
@@ -45,14 +47,20 @@ type Cart struct {
 }
 
 type Order struct {
-	OrderID       string     `firestore:"orderId,omitempty"`
-	BuyerID       string     `firestore:"buyerId"`
-	PrintShopID   string     `firestore:"printShopId"`
-	Items         []CartItem `firestore:"items"`
-	TotalAmount   float64    `firestore:"totalAmount"`
-	PaymentMethod string     `firestore:"paymentMethod"`
-	TransactionID string     `firestore:"transactionId"`
-	Status        string     `firestore:"status"`
-	CreatedAt     time.Time  `firestore:"createdAt"`
-	UpdatedAt     time.Time  `firestore:"updatedAt"`
+	OrderID        string            `firestore:"orderId,omitempty"`
+	BuyerID        string            `firestore:"buyerId"`
+	PrintShopID    string            `firestore:"printShopId"`
+	Items          []CartItem        `firestore:"items"`
+	PrintOptions   PrintOrderOptions `firestore:"printOptions"` // Print configuration for the order
+	TotalAmount    float64           `firestore:"totalAmount"`
+	PaymentMethod  string            `firestore:"paymentMethod"`  // Legacy: "unpaid", "paid"
+	TransactionID  string            `firestore:"transactionId"`    // Legacy: kept for backward compatibility
+	PaymentStatus  string            `firestore:"paymentStatus"`  // "unpaid", "partial", "paid"
+	PaymentID      string            `firestore:"paymentId"`      // Latest payment ID
+	DeliveryStatus string            `firestore:"deliveryStatus"` // "pending", "processing", "ready", "delivered"
+	DeliveryMethod string            `firestore:"deliveryMethod"` // "pickup", "shipping"
+	PickupLocation string            `firestore:"pickupLocation"` // For pickup orders
+	Status         string            `firestore:"status"`         // "pending", "confirmed", "processing", "ready", "completed"
+	CreatedAt      time.Time         `firestore:"createdAt"`
+	UpdatedAt      time.Time         `firestore:"updatedAt"`
 }

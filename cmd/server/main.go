@@ -50,9 +50,15 @@ func runSeeders(env string) {
 func setupRoutes() http.Handler {
 	mux := http.NewServeMux()
 
-	//Implement printshop handlers
+	// Print shop console handlers
 	printOptionsHandler := handlers.NewPrintOptionsHandler()
 	pricingHandler := handlers.NewPricingHandler()
+	printShopConsoleHandler := handlers.NewPrintShopConsoleHandler()
+	printShopConfigHandler := handlers.NewPrintShopConfigHandler()
+	printShopServiceConfigHandler := handlers.NewPrintShopServiceConfigHandler()
+	publicPrintShopHandler := handlers.NewPublicPrintShopHandler()
+	matchingHandler := handlers.NewMatchingHandler()
+	paymentHandler := handlers.NewPaymentHandler()
 
 	// Health check route (no logging middleware for efficiency)
 	mux.Handle("/health", http.HandlerFunc(handlers.HealthHandler))
@@ -67,6 +73,12 @@ func setupRoutes() http.Handler {
 	// Print options route
 	mux.Handle("/print-options", middleware.LogMiddleware(http.HandlerFunc(printOptionsHandler.GetPrintOptions)))
 
+	// Public print shop endpoints (no authentication required)
+	mux.Handle("/printshops", middleware.LogMiddleware(http.HandlerFunc(publicPrintShopHandler.GetActiveShops)))
+	mux.Handle("/printshops/details", middleware.LogMiddleware(http.HandlerFunc(publicPrintShopHandler.GetShopDetails)))
+	mux.Handle("/printshops/match", middleware.LogMiddleware(http.HandlerFunc(publicPrintShopHandler.MatchShopsForOrder)))
+	mux.Handle("/printshops/calculate", middleware.LogMiddleware(http.HandlerFunc(publicPrintShopHandler.CalculatePriceForService)))
+
 	// Authenticated routes
 	protected := middleware.AuthMiddleware
 	mux.Handle("/artworks/upload", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.UploadArtHandler))))
@@ -79,6 +91,58 @@ func setupRoutes() http.Handler {
 	mux.Handle("/orders", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.GetOrdersHandler))))
 	//calculate price
 	mux.Handle("/calculate-price", middleware.LogMiddleware(protected(http.HandlerFunc(pricingHandler.CalculatePrice))))
+
+	// Print Shop Console routes (requires printShop role)
+	// Chain: AuthMiddleware -> PrintShopAuthMiddleware -> Handler
+	printShopChain := func(h http.HandlerFunc) http.HandlerFunc {
+		return middleware.AuthMiddleware(middleware.PrintShopAuthMiddleware(h))
+	}
+
+	// Shop profile management
+	mux.Handle("/printshop/profile", middleware.LogMiddleware(printShopChain(printShopConsoleHandler.GetShopProfile)))
+	mux.Handle("/printshop/profile/create", middleware.LogMiddleware(printShopChain(printShopConsoleHandler.CreateShopProfile)))
+	mux.Handle("/printshop/profile/update", middleware.LogMiddleware(printShopChain(printShopConsoleHandler.UpdateShopProfile)))
+
+	// Service management
+	mux.Handle("/printshop/services", middleware.LogMiddleware(printShopChain(printShopConsoleHandler.GetServices)))
+	mux.Handle("/printshop/services/create", middleware.LogMiddleware(printShopChain(printShopConsoleHandler.CreateService)))
+	mux.Handle("/printshop/services/update/", middleware.LogMiddleware(printShopChain(printShopConsoleHandler.UpdateService)))
+	mux.Handle("/printshop/services/delete/", middleware.LogMiddleware(printShopChain(printShopConsoleHandler.DeleteService)))
+
+	// Configuration management - Frames
+	mux.Handle("/printshop/frames", middleware.LogMiddleware(printShopChain(printShopConfigHandler.GetFrames)))
+	mux.Handle("/printshop/frames/create", middleware.LogMiddleware(printShopChain(printShopConfigHandler.CreateFrame)))
+	mux.Handle("/printshop/frames/update/", middleware.LogMiddleware(printShopChain(printShopConfigHandler.UpdateFrame)))
+	mux.Handle("/printshop/frames/delete/", middleware.LogMiddleware(printShopChain(printShopConfigHandler.DeleteFrame)))
+
+	// Configuration management - Sizes
+	mux.Handle("/printshop/sizes", middleware.LogMiddleware(printShopChain(printShopConfigHandler.GetSizes)))
+	mux.Handle("/printshop/sizes/create", middleware.LogMiddleware(printShopChain(printShopConfigHandler.CreateSize)))
+	mux.Handle("/printshop/sizes/update/", middleware.LogMiddleware(printShopChain(printShopConfigHandler.UpdateSize)))
+	mux.Handle("/printshop/sizes/delete/", middleware.LogMiddleware(printShopChain(printShopConfigHandler.DeleteSize)))
+
+	// Configuration management - Materials
+	mux.Handle("/printshop/materials", middleware.LogMiddleware(printShopChain(printShopConfigHandler.GetMaterials)))
+	mux.Handle("/printshop/materials/create", middleware.LogMiddleware(printShopChain(printShopConfigHandler.CreateMaterial)))
+	mux.Handle("/printshop/materials/update/", middleware.LogMiddleware(printShopChain(printShopConfigHandler.UpdateMaterial)))
+	mux.Handle("/printshop/materials/delete/", middleware.LogMiddleware(printShopChain(printShopConfigHandler.DeleteMaterial)))
+
+	// Service pricing configuration
+	mux.Handle("/printshop/services/pricing/", middleware.LogMiddleware(printShopChain(printShopServiceConfigHandler.GetServicePricing)))
+	mux.Handle("/printshop/services/pricing/update/", middleware.LogMiddleware(printShopChain(printShopServiceConfigHandler.UpdateServicePricing)))
+	mux.Handle("/printshop/services/calculate/", middleware.LogMiddleware(printShopChain(printShopServiceConfigHandler.CalculateServicePrice)))
+
+	// Order matching endpoints (admin/authenticated)
+	mux.Handle("/orders/matches", middleware.LogMiddleware(protected(http.HandlerFunc(matchingHandler.GetOrderMatches))))
+	mux.Handle("/orders/assign", middleware.LogMiddleware(protected(http.HandlerFunc(matchingHandler.AssignShopToOrder))))
+
+	// Payment endpoints
+	mux.Handle("/payments/create", middleware.LogMiddleware(protected(http.HandlerFunc(paymentHandler.CreatePaymentHandler))))
+	mux.Handle("/payments/verify", middleware.LogMiddleware(protected(http.HandlerFunc(paymentHandler.VerifyPaymentHandler))))
+	mux.Handle("/payments", middleware.LogMiddleware(protected(http.HandlerFunc(paymentHandler.GetPaymentsHandler))))
+	mux.Handle("/payments/webhook/", middleware.LogMiddleware(http.HandlerFunc(paymentHandler.PaymentWebhookHandler)))
+	mux.Handle("/payments/refund", middleware.LogMiddleware(protected(http.HandlerFunc(paymentHandler.RefundPaymentHandler))))
+
 	return middleware.CORS(mux)
 }
 

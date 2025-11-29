@@ -16,7 +16,7 @@ type User struct {
 	DateOfBirth   string    `firestore:"dateOfBirth"`   // Format: YYYY-MM-DD
 	Description   string    `firestore:"description"`   // Profile bio
 	AvatarURL     string    `firestore:"avatarUrl"`     // Cloudinary avatar image
-	BackgroundURL string    `firestore:"backgroundUrl"` // Cloudinary cover image
+	BackgroundURL string    `firestore:"backgroundUrl"` // Cloudinary cover image REMOVE FILE
 	CreatedAt     time.Time `firestore:"createdAt"`     // Account creation time
 }
 

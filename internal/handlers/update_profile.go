@@ -35,7 +35,7 @@ func UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
 
 	updates := make(map[string]interface{})
 
-	// ✏️ Text fields
+	// ✏️ Text fields to be updated
 	for _, field := range []string{"name", "description", "dateOfBirth"} {
 		if val := r.FormValue(field); val != "" {
 			updates[field] = val

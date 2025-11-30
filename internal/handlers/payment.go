@@ -32,7 +32,12 @@ func NewPaymentHandler() *PaymentHandler {
 // CreatePaymentHandler creates a payment for an order
 func (h *PaymentHandler) CreatePaymentHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	buyerID := ctx.Value("userID").(string)
+	uid := ctx.Value("userId")
+	if uid == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	buyerID := uid.(string)
 
 	var req models.PaymentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -121,7 +126,12 @@ func (h *PaymentHandler) CreatePaymentHandler(w http.ResponseWriter, r *http.Req
 // VerifyPaymentHandler verifies a payment status
 func (h *PaymentHandler) VerifyPaymentHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	buyerID := ctx.Value("userID").(string)
+	uid := ctx.Value("userId")
+	if uid == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	buyerID := uid.(string)
 
 	// Extract payment ID from URL
 	paymentID := r.URL.Query().Get("id")
@@ -167,7 +177,12 @@ func (h *PaymentHandler) VerifyPaymentHandler(w http.ResponseWriter, r *http.Req
 // GetPaymentsHandler retrieves payments for an order
 func (h *PaymentHandler) GetPaymentsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	buyerID := ctx.Value("userID").(string)
+	uid := ctx.Value("userId")
+	if uid == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	buyerID := uid.(string)
 
 	orderID := r.URL.Query().Get("orderId")
 	if orderID == "" {

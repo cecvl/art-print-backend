@@ -121,6 +121,11 @@ func setupRoutes() http.Handler {
 	mux.Handle("/printshop/frames/update/", middleware.LogMiddleware(printShopChain(printShopConfigHandler.UpdateFrame)))
 	mux.Handle("/printshop/frames/delete/", middleware.LogMiddleware(printShopChain(printShopConfigHandler.DeleteFrame)))
 
+	// Printshop frame uploads (images for frame types) - upload/list/remove
+	mux.Handle("/printshop/frames/upload", middleware.LogMiddleware(printShopChain(handlers.UploadFrameHandler)))
+	mux.Handle("/printshop/frames/list", middleware.LogMiddleware(printShopChain(handlers.GetFramesHandler)))
+	mux.Handle("/printshop/frames/remove", middleware.LogMiddleware(printShopChain(handlers.RemoveFrameHandler)))
+
 	// Configuration management - Sizes
 	mux.Handle("/printshop/sizes", middleware.LogMiddleware(printShopChain(printShopConfigHandler.GetSizes)))
 	mux.Handle("/printshop/sizes/create", middleware.LogMiddleware(printShopChain(printShopConfigHandler.CreateSize)))
@@ -147,6 +152,10 @@ func setupRoutes() http.Handler {
 	mux.Handle("/admin/artworks/get", middleware.LogMiddleware(adminChain(handlers.GetAdminArtworkHandler)))
 	mux.Handle("/admin/artworks/resolve", middleware.LogMiddleware(adminChain(handlers.ResolveArtworkHandler)))
 	mux.Handle("/admin/artworks/assign", middleware.LogMiddleware(adminChain(handlers.AssignArtworkHandler)))
+
+	// Admin frames review endpoints
+	mux.Handle("/admin/frames", middleware.LogMiddleware(adminChain(handlers.GetAdminFramesHandler)))
+	mux.Handle("/admin/frames/resolve", middleware.LogMiddleware(adminChain(handlers.ResolveFrameHandler)))
 
 	// Payment endpoints
 	mux.Handle("/payments/create", middleware.LogMiddleware(protected(http.HandlerFunc(paymentHandler.CreatePaymentHandler))))

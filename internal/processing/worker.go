@@ -3,6 +3,7 @@ package processing
 import (
 	"context"
 	"log"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -42,10 +43,11 @@ func StartWorker(ctx context.Context) error {
 		for _, s := range snaps {
 			go func(s *firestore.DocumentSnapshot) {
 				jobRef := s.Ref
-				jobData := s.Data()
-				artworkId, _ := jobData["artworkId"].(string)
-				cloudInfo, _ := jobData["cloudinary"].(map[string]interface{})
-				imgUrl, _ := cloudInfo["secureUrl"].(string)
+					jobData := s.Data()
+					artworkId, _ := jobData["artworkId"].(string)
+					frameId, _ := jobData["frameId"].(string)
+					cloudInfo, _ := jobData["cloudinary"].(map[string]interface{})
+					imgUrl, _ := cloudInfo["secureUrl"].(string)
 
 				// mark job processing
 				jobRef.Update(ctx, []firestore.Update{{Path: "status", Value: "processing"}, {Path: "startedAt", Value: time.Now()}})
@@ -62,7 +64,7 @@ func StartWorker(ctx context.Context) error {
 				// run WebDetection (copyright / similar images)
 				webRes, wErr := client.DetectWeb(ctx, visImg, nil)
 				if wErr != nil {
-					log.Printf("⚠️ WebDetection failed for artwork %s: %v", artworkId, wErr)
+					log.Printf("⚠️ WebDetection failed for job (artwork:%s frame:%s) %v", artworkId, frameId, wErr)
 				}
 				// prepare web entities summary
 				var webEntities []map[string]interface{}
@@ -94,7 +96,7 @@ func StartWorker(ctx context.Context) error {
 				blurScore := ComputeBlurFromImage(img)
 				colorDepth := DetectColorDepth(img)
 
-				// Persist results to artwork doc
+				// Persist analysis (shared)
 				analysis := map[string]interface{}{
 					"safeSearch": map[string]interface{}{
 						"adult":    res.Adult.String(),
@@ -123,6 +125,46 @@ func StartWorker(ctx context.Context) error {
 					procErrors = append(procErrors, "nsfw_violence")
 				}
 
+				// If this is a frame job, run label detection to verify it's a frame
+				if frameId != "" {
+					labels, lErr := client.DetectLabels(ctx, visImg, nil, 10)
+					var labelSumm []map[string]interface{}
+					foundFrame := false
+					if lErr == nil {
+						for _, lb := range labels {
+							if lb == nil {
+								continue
+							}
+							desc := lb.Description
+							labelSumm = append(labelSumm, map[string]interface{}{"description": desc, "score": lb.Score})
+							if strings.Contains(strings.ToLower(desc), "frame") || strings.Contains(strings.ToLower(desc), "picture frame") {
+								foundFrame = true
+							}
+						}
+					} else {
+						log.Printf("⚠️ Label detection failed for frame %s: %v", frameId, lErr)
+					}
+					analysis["labels"] = labelSumm
+					if !foundFrame {
+						procStatus = "failed"
+						procErrors = append(procErrors, "not_a_frame")
+					}
+
+					// Persist to frames doc
+					frameRef := firebase.FirestoreClient.Collection("frames").Doc(frameId)
+					_, err = frameRef.Set(ctx, map[string]interface{}{"analysis": analysis, "processingStatus": procStatus, "processingErrors": procErrors}, firestore.MergeAll)
+					if err != nil {
+						log.Printf("❌ Failed to update frame %s after analysis: %v", frameId, err)
+						jobRef.Update(ctx, []firestore.Update{{Path: "status", Value: "failed"}, {Path: "error", Value: err.Error()}})
+						return
+					}
+
+					jobRef.Update(ctx, []firestore.Update{{Path: "status", Value: "done"}, {Path: "finishedAt", Value: time.Now()}})
+					log.Printf("✅ Processed frame %s (job %s) - status=%s", frameId, jobRef.ID, procStatus)
+					return
+				}
+
+				// Persist results to artwork doc
 				artRef := firebase.FirestoreClient.Collection("artworks").Doc(artworkId)
 				_, err = artRef.Set(ctx, map[string]interface{}{"analysis": analysis, "processingStatus": procStatus, "processingErrors": procErrors}, firestore.MergeAll)
 				if err != nil {

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -16,9 +15,14 @@ import (
 
 // CheckoutHandler converts the user's cart into an order and assigns a print shop
 func CheckoutHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 	fsClient := firebase.GetFirestoreClient()
-	buyerID := r.Context().Value("userID").(string)
+	uid := ctx.Value("userId")
+	if uid == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	buyerID := uid.(string)
 
 	// Parse request to get print options
 	var checkoutReq struct {
@@ -96,9 +100,14 @@ func CheckoutHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetOrdersHandler fetches all orders for the authenticated user
 func GetOrdersHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 	fsClient := firebase.GetFirestoreClient()
-	buyerID := r.Context().Value("userID").(string)
+	uid := ctx.Value("userId")
+	if uid == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	buyerID := uid.(string)
 
 	snaps, err := fsClient.Collection("orders").Where("buyerId", "==", buyerID).Documents(ctx).GetAll()
 	if err != nil {

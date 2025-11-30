@@ -34,6 +34,25 @@ services:
     networks:
       - art-print-network
 
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    image: art-print-worker:latest
+    container_name: art-print-worker
+    environment:
+      - APP_ENV=production
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+    volumes:
+      - ./configs:/app/configs:ro
+    restart: always
+    networks:
+      - art-print-network
+
 networks:
   art-print-network:
     driver: bridge

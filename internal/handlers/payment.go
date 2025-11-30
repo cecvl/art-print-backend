@@ -74,7 +74,7 @@ func (h *PaymentHandler) CreatePaymentHandler(w http.ResponseWriter, r *http.Req
 	// Update payment with buyer ID
 	paymentRepo := repositories.NewPaymentRepository(firebase.FirestoreClient)
 	if err := paymentRepo.UpdatePayment(ctx, payment.ID, map[string]interface{}{
-		"buyerId":  buyerID,
+		"buyerId":   buyerID,
 		"updatedAt": time.Now(),
 	}); err != nil {
 		log.Printf("⚠️ Failed to update buyer ID: %v", err)
@@ -107,10 +107,10 @@ func (h *PaymentHandler) CreatePaymentHandler(w http.ResponseWriter, r *http.Req
 	response := models.PaymentResponse{
 		PaymentID:     payment.ID,
 		OrderID:       payment.OrderID,
-		Amount:         payment.Amount,
-		Status:         payment.Status,
+		Amount:        payment.Amount,
+		Status:        payment.Status,
 		TransactionID: payment.TransactionID,
-		ProviderData:   payment.ProviderData,
+		ProviderData:  payment.ProviderData,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -251,4 +251,3 @@ func (h *PaymentHandler) RefundPaymentHandler(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Refund processed successfully"})
 }
-

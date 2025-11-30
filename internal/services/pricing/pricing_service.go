@@ -14,12 +14,12 @@ func NewPricingService() *PricingService {
 }
 
 type PriceRequest struct {
-	Size     string `json:"size"`
-	Frame    string `json:"frame"`
-	Material string `json:"material"`
-	Medium   string `json:"medium"`
-	Quantity int    `json:"quantity"`
-	RushOrder bool  `json:"rushOrder"`
+	Size      string `json:"size"`
+	Frame     string `json:"frame"`
+	Material  string `json:"material"`
+	Medium    string `json:"medium"`
+	Quantity  int    `json:"quantity"`
+	RushOrder bool   `json:"rushOrder"`
 }
 
 type PriceResponse struct {
@@ -120,16 +120,16 @@ func (p *PricingService) CalculateShopPrice(service *models.PrintService, option
 
 // CalculateShopPriceWithBreakdown returns price with detailed breakdown
 type PriceBreakdown struct {
-	BasePrice      float64            `json:"basePrice"`
-	SizeModifier   float64            `json:"sizeModifier"`
-	MaterialMarkup float64            `json:"materialMarkup"`
-	MediumMarkup   float64            `json:"mediumMarkup"`
-	FramePrice     float64            `json:"framePrice"`
-	Quantity       int                `json:"quantity"`
-	QuantityDiscount float64          `json:"quantityDiscount"`
-	RushOrderFee   float64            `json:"rushOrderFee"`
-	Subtotal       float64            `json:"subtotal"`
-	Total          float64            `json:"total"`
+	BasePrice        float64 `json:"basePrice"`
+	SizeModifier     float64 `json:"sizeModifier"`
+	MaterialMarkup   float64 `json:"materialMarkup"`
+	MediumMarkup     float64 `json:"mediumMarkup"`
+	FramePrice       float64 `json:"framePrice"`
+	Quantity         int     `json:"quantity"`
+	QuantityDiscount float64 `json:"quantityDiscount"`
+	RushOrderFee     float64 `json:"rushOrderFee"`
+	Subtotal         float64 `json:"subtotal"`
+	Total            float64 `json:"total"`
 }
 
 func (p *PricingService) CalculateShopPriceWithBreakdown(service *models.PrintService, options models.PrintOrderOptions) PriceBreakdown {

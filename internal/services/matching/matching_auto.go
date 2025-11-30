@@ -46,7 +46,7 @@ func (m *AutoMatcher) Assign(ctx context.Context, order *models.Order, options m
 	bestMatch := matches[0]
 	order.PrintShopID = bestMatch.ShopID
 
-	log.Printf("✅ Auto-assigned order %s to shop %s (price: %.2f)", 
+	log.Printf("✅ Auto-assigned order %s to shop %s (price: %.2f)",
 		order.OrderID, bestMatch.ShopName, bestMatch.TotalPrice)
 
 	return nil

@@ -131,4 +131,3 @@ func (sd *ServiceDiscovery) estimateDeliveryDays(shop *models.PrintShopProfile, 
 
 	return baseDays
 }
-

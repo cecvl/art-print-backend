@@ -178,4 +178,3 @@ func calculatePrice(service *models.PrintService, options models.PrintOrderOptio
 
 	return price
 }
-

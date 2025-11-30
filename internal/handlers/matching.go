@@ -26,7 +26,7 @@ func NewMatchingHandler() *MatchingHandler {
 	configService := config.NewDefaultConfigService()
 	return &MatchingHandler{
 		orderService: orders.NewOrderService(configService),
-		discovery:     matching.NewServiceDiscovery(repo),
+		discovery:    matching.NewServiceDiscovery(repo),
 	}
 }
 
@@ -35,7 +35,7 @@ func (h *MatchingHandler) GetOrderMatches(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 
 	var req struct {
-		OrderID string                  `json:"orderId"`
+		OrderID string                   `json:"orderId"`
 		Options models.PrintOrderOptions `json:"options"`
 	}
 
@@ -110,4 +110,3 @@ func (h *MatchingHandler) AssignShopToOrder(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(order)
 }
-

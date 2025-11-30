@@ -68,6 +68,7 @@ func setupRoutes() http.Handler {
 	mux.Handle("/sessionLogin", middleware.LogMiddleware(http.HandlerFunc(handlers.SessionLoginHandler)))
 	mux.Handle("/sessionLogout", middleware.LogMiddleware(http.HandlerFunc(handlers.SessionLogoutHandler)))
 	mux.Handle("/artworks", middleware.LogMiddleware(http.HandlerFunc(handlers.GetArtworksHandler)))
+	mux.Handle("/artworks/status", middleware.LogMiddleware(http.HandlerFunc(handlers.GetArtworkStatusHandler)))
 	mux.Handle("/artists", middleware.LogMiddleware(http.HandlerFunc(handlers.GetArtistsHandler)))
 
 	// Print options route

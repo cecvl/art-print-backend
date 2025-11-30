@@ -55,6 +55,24 @@ services:
       retries: 3
       start_period: 40s
 
+  # Worker service (background image processing)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: art-print-worker
+    environment:
+      - APP_ENV=dev
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-demo-project}
+      - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
+      - FIREBASE_AUTH_EMULATOR_HOST=http://firebase-emulator:9099
+    networks:
+      - art-print-network
+    depends_on:
+      firebase-emulator:
+        condition: service_healthy
+    restart: unless-stopped
+
 networks:
   art-print-network:
     driver: bridge

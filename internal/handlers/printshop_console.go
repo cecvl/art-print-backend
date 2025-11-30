@@ -258,4 +258,3 @@ func (h *PrintShopConsoleHandler) DeleteService(w http.ResponseWriter, r *http.R
 
 	w.WriteHeader(http.StatusNoContent)
 }
-

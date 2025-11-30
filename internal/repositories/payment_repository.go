@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	"github.com/cecvl/art-print-backend/internal/models"
 	"github.com/google/uuid"
-	"cloud.google.com/go/firestore"
 )
 
 // PaymentRepository handles payment data operations
@@ -156,4 +156,3 @@ func (r *PaymentRepository) GetPaymentsByStatus(ctx context.Context, status mode
 
 	return payments, nil
 }
-

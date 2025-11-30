@@ -38,12 +38,12 @@ func (h *PublicPrintShopHandler) GetActiveShops(w http.ResponseWriter, r *http.R
 
 	// Return simplified shop info (no sensitive data)
 	type ShopSummary struct {
-		ID          string  `json:"id"`
-		Name        string  `json:"name"`
-		Description string  `json:"description"`
-		Location    models.Location `json:"location"`
-		Rating      float64 `json:"rating"`
-		ServiceCount int    `json:"serviceCount"`
+		ID           string          `json:"id"`
+		Name         string          `json:"name"`
+		Description  string          `json:"description"`
+		Location     models.Location `json:"location"`
+		Rating       float64         `json:"rating"`
+		ServiceCount int             `json:"serviceCount"`
 	}
 
 	summaries := make([]ShopSummary, 0, len(shops))
@@ -94,12 +94,12 @@ func (h *PublicPrintShopHandler) GetShopDetails(w http.ResponseWriter, r *http.R
 
 	// Return public shop info
 	type ShopDetails struct {
-		ID          string                `json:"id"`
-		Name        string                `json:"name"`
-		Description string                `json:"description"`
-		Location    models.Location       `json:"location"`
-		Contact     models.ContactInfo    `json:"contact"`
-		Rating      float64               `json:"rating"`
+		ID          string                 `json:"id"`
+		Name        string                 `json:"name"`
+		Description string                 `json:"description"`
+		Location    models.Location        `json:"location"`
+		Contact     models.ContactInfo     `json:"contact"`
+		Rating      float64                `json:"rating"`
 		Services    []*models.PrintService `json:"services"`
 	}
 
@@ -122,7 +122,7 @@ func (h *PublicPrintShopHandler) CalculatePriceForService(w http.ResponseWriter,
 	ctx := r.Context()
 
 	var req struct {
-		ServiceID string                  `json:"serviceId"`
+		ServiceID string                   `json:"serviceId"`
 		Options   models.PrintOrderOptions `json:"options"`
 	}
 
@@ -153,13 +153,13 @@ func (h *PublicPrintShopHandler) CalculatePriceForService(w http.ResponseWriter,
 	shop, _ := h.repo.GetShopByID(ctx, service.ShopID)
 
 	response := map[string]interface{}{
-		"serviceId":  req.ServiceID,
-		"shopId":     service.ShopID,
-		"shopName":   shop.Name,
+		"serviceId":   req.ServiceID,
+		"shopId":      service.ShopID,
+		"shopName":    shop.Name,
 		"serviceName": service.Name,
-		"options":    req.Options,
-		"breakdown":  breakdown,
-		"totalPrice": totalPrice,
+		"options":     req.Options,
+		"breakdown":   breakdown,
+		"totalPrice":  totalPrice,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -215,12 +215,12 @@ func (h *PublicPrintShopHandler) MatchShopsForOrder(w http.ResponseWriter, r *ht
 				matchScore := 100.0 / (1.0 + totalPrice/100.0) // Normalize score
 
 				matches = append(matches, models.ShopMatch{
-					ShopID:     shop.ID,
-					ShopName:   shop.Name,
-					ServiceID:   service.ID,
-					TotalPrice: totalPrice,
-					MatchScore: matchScore,
-					Technology: service.Technology,
+					ShopID:       shop.ID,
+					ShopName:     shop.Name,
+					ServiceID:    service.ID,
+					TotalPrice:   totalPrice,
+					MatchScore:   matchScore,
+					Technology:   service.Technology,
 					DeliveryDays: 5, // Default, can be enhanced later
 				})
 			}
@@ -230,4 +230,3 @@ func (h *PublicPrintShopHandler) MatchShopsForOrder(w http.ResponseWriter, r *ht
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(matches)
 }
-

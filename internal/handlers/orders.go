@@ -24,7 +24,7 @@ func CheckoutHandler(w http.ResponseWriter, r *http.Request) {
 	var checkoutReq struct {
 		PrintOptions models.PrintOrderOptions `json:"printOptions"`
 	}
-	
+
 	// Try to decode print options (optional - can use defaults)
 	json.NewDecoder(r.Body).Decode(&checkoutReq)
 
@@ -62,8 +62,8 @@ func CheckoutHandler(w http.ResponseWriter, r *http.Request) {
 		PrintOptions:   checkoutReq.PrintOptions,
 		TotalAmount:    total,
 		Status:         "pending",
-		PaymentMethod:  "unpaid", // Legacy field
-		PaymentStatus:  "unpaid", // New field
+		PaymentMethod:  "unpaid",  // Legacy field
+		PaymentStatus:  "unpaid",  // New field
 		DeliveryStatus: "pending", // Initialize delivery status
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
@@ -72,7 +72,7 @@ func CheckoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Assign print shop using matching service
 	configService := config.NewDefaultConfigService()
 	orderService := orders.NewOrderService(configService)
-	
+
 	if err := orderService.AssignShopForOrder(ctx, &order); err != nil {
 		log.Printf("⚠️ Failed to assign shop for order %s: %v", order.OrderID, err)
 		// Continue without assignment - order can be manually assigned later

@@ -123,7 +123,7 @@ func (s *PaymentService) VerifyPayment(ctx context.Context, paymentID string) (*
 		// Update payment status to completed
 		now := time.Now()
 		updates := map[string]interface{}{
-			"status":     models.PaymentStatusCompleted,
+			"status":      models.PaymentStatusCompleted,
 			"completedAt": now,
 			"updatedAt":   now,
 		}
@@ -202,4 +202,3 @@ func (s *PaymentService) CalculatePaymentStatus(ctx context.Context, orderID str
 		return "partial", totalPaid, nil
 	}
 }
-

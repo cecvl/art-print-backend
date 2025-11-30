@@ -15,10 +15,10 @@ type SimulatedProvider struct {
 // SimulatedTransaction represents a simulated payment transaction
 type SimulatedTransaction struct {
 	TransactionID string
-	Amount         float64
-	OrderID        string
-	Status         string // "pending", "completed", "failed"
-	CreatedAt      time.Time
+	Amount        float64
+	OrderID       string
+	Status        string // "pending", "completed", "failed"
+	CreatedAt     time.Time
 }
 
 // NewSimulatedProvider creates a new simulated payment provider
@@ -40,10 +40,10 @@ func (p *SimulatedProvider) CreatePayment(ctx context.Context, amount float64, o
 
 	transaction := &SimulatedTransaction{
 		TransactionID: transactionID,
-		Amount:         amount,
-		OrderID:        orderID,
-		Status:         "pending",
-		CreatedAt:      time.Now(),
+		Amount:        amount,
+		OrderID:       orderID,
+		Status:        "pending",
+		CreatedAt:     time.Now(),
 	}
 
 	p.transactions[transactionID] = transaction
@@ -91,4 +91,3 @@ func (p *SimulatedProvider) GetTransaction(transactionID string) (*SimulatedTran
 	txn, exists := p.transactions[transactionID]
 	return txn, exists
 }
-

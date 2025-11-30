@@ -410,4 +410,3 @@ func (h *PrintShopConfigHandler) DeleteMaterial(w http.ResponseWriter, r *http.R
 
 	http.Error(w, "Material not found", http.StatusNotFound)
 }
-

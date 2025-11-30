@@ -275,7 +275,7 @@ func (r *PrintShopRepository) DeleteService(ctx context.Context, serviceID strin
 	if err == nil && shopDoc.Exists() {
 		var shop models.PrintShopProfile
 		shopDoc.DataTo(&shop)
-		
+
 		// Remove service ID from list
 		var newServices []string
 		for _, sID := range shop.Services {
@@ -283,7 +283,7 @@ func (r *PrintShopRepository) DeleteService(ctx context.Context, serviceID strin
 				newServices = append(newServices, sID)
 			}
 		}
-		
+
 		shopRef.Update(ctx, []firestore.Update{
 			{Path: "services", Value: newServices},
 			{Path: "updatedAt", Value: time.Now()},
@@ -564,4 +564,3 @@ func (r *PrintShopRepository) GetShopsByService(ctx context.Context, serviceID s
 
 	return []*models.PrintShopProfile{shop}, nil
 }
-

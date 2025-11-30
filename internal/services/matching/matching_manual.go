@@ -26,7 +26,7 @@ func NewManualMatcher() *ManualMatcher {
 func (m *ManualMatcher) Assign(ctx context.Context, order *models.Order, options models.PrintOrderOptions) error {
 	// Don't assign - order remains unassigned
 	order.PrintShopID = ""
-	
+
 	log.Printf("📋 Manual mode: Order %s requires manual shop assignment", order.OrderID)
 	return nil
 }

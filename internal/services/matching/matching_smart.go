@@ -65,7 +65,7 @@ func (m *SmartMatcher) Assign(ctx context.Context, order *models.Order, options 
 	bestMatch := matches[0]
 	order.PrintShopID = bestMatch.ShopID
 
-	log.Printf("✅ Smart-assigned order %s to shop %s (score: %.2f, price: %.2f)", 
+	log.Printf("✅ Smart-assigned order %s to shop %s (score: %.2f, price: %.2f)",
 		order.OrderID, bestMatch.ShopName, bestMatch.MatchScore, bestMatch.TotalPrice)
 
 	return nil
@@ -108,11 +108,11 @@ func (m *SmartMatcher) calculateSmartScore(shop *models.PrintShopProfile, match 
 // getTechnologyScore returns a score based on technology type
 func (m *SmartMatcher) getTechnologyScore(technology string) float64 {
 	techScores := map[string]float64{
-		"giclée":        90.0,
+		"giclée":          90.0,
 		"dye-sublimation": 85.0,
-		"inkjet":         80.0,
-		"laser":          75.0,
-		"offset":         70.0,
+		"inkjet":          80.0,
+		"laser":           75.0,
+		"offset":          70.0,
 	}
 
 	if score, ok := techScores[technology]; ok {

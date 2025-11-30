@@ -54,7 +54,7 @@ type Order struct {
 	PrintOptions   PrintOrderOptions `firestore:"printOptions"` // Print configuration for the order
 	TotalAmount    float64           `firestore:"totalAmount"`
 	PaymentMethod  string            `firestore:"paymentMethod"`  // Legacy: "unpaid", "paid"
-	TransactionID  string            `firestore:"transactionId"`    // Legacy: kept for backward compatibility
+	TransactionID  string            `firestore:"transactionId"`  // Legacy: kept for backward compatibility
 	PaymentStatus  string            `firestore:"paymentStatus"`  // "unpaid", "partial", "paid"
 	PaymentID      string            `firestore:"paymentId"`      // Latest payment ID
 	DeliveryStatus string            `firestore:"deliveryStatus"` // "pending", "processing", "ready", "delivered"

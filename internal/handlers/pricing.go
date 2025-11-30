@@ -67,9 +67,9 @@ func (h *PricingHandler) CalculatePrice(w http.ResponseWriter, r *http.Request) 
 
 		response := map[string]interface{}{
 			"serviceId":  req.ServiceID,
-			"total":     int(totalPrice),
+			"total":      int(totalPrice),
 			"totalPrice": totalPrice,
-			"breakdown": breakdown,
+			"breakdown":  breakdown,
 		}
 
 		w.Header().Set("Content-Type", "application/json")

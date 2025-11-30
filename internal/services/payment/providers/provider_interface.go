@@ -18,4 +18,3 @@ type PaymentProvider interface {
 	// GetProviderName returns the name of the provider
 	GetProviderName() string
 }
-

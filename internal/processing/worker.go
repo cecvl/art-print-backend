@@ -43,11 +43,11 @@ func StartWorker(ctx context.Context) error {
 		for _, s := range snaps {
 			go func(s *firestore.DocumentSnapshot) {
 				jobRef := s.Ref
-					jobData := s.Data()
-					artworkId, _ := jobData["artworkId"].(string)
-					frameId, _ := jobData["frameId"].(string)
-					cloudInfo, _ := jobData["cloudinary"].(map[string]interface{})
-					imgUrl, _ := cloudInfo["secureUrl"].(string)
+				jobData := s.Data()
+				artworkId, _ := jobData["artworkId"].(string)
+				frameId, _ := jobData["frameId"].(string)
+				cloudInfo, _ := jobData["cloudinary"].(map[string]interface{})
+				imgUrl, _ := cloudInfo["secureUrl"].(string)
 
 				// mark job processing
 				jobRef.Update(ctx, []firestore.Update{{Path: "status", Value: "processing"}, {Path: "startedAt", Value: time.Now()}})

@@ -6,6 +6,8 @@ const (
 	Buyer     = "buyer"
 	Artist    = "artist"
 	PrintShop = "printShop"
+	// Admin role for site administrators who can review and manage content
+	Admin = "admin"
 )
 
 type User struct {

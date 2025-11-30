@@ -1,14 +1,16 @@
 module github.com/cecvl/art-print-backend
 
-go 1.24.0
+go 1.25.4
 
 require (
 	cloud.google.com/go/firestore v1.20.0
+	cloud.google.com/go/vision v1.2.0
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/cloudinary/cloudinary-go/v2 v2.10.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/api v0.247.0
+	google.golang.org/genproto v0.0.0-20251124214823-79d6a2a48846
 )
 
 require (
@@ -21,7 +23,6 @@ require (
 	cloud.google.com/go/longrunning v0.7.0 // indirect
 	cloud.google.com/go/monitoring v1.24.3 // indirect
 	cloud.google.com/go/storage v1.56.0 // indirect
-	cloud.google.com/go/vision v1.2.0 // indirect
 	cloud.google.com/go/vision/v2 v2.9.6 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.29.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.53.0 // indirect
@@ -60,7 +61,6 @@ require (
 	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto v0.0.0-20251124214823-79d6a2a48846 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251111163417-95abcf5c77ba // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba // indirect
 	google.golang.org/grpc v1.75.1 // indirect

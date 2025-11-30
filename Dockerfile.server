@@ -1,6 +1,6 @@
 # Multi-stage build for server module - optimized for GCP deployment
 # Stage 1: Build stage
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25.4-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata

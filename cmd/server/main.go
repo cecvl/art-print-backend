@@ -99,6 +99,11 @@ func setupRoutes() http.Handler {
 		return middleware.AuthMiddleware(middleware.PrintShopAuthMiddleware(h))
 	}
 
+	// Admin routes chain: Auth -> AdminOnly
+	adminChain := func(h http.HandlerFunc) http.HandlerFunc {
+		return middleware.AuthMiddleware(middleware.AdminOnly(h))
+	}
+
 	// Shop profile management
 	mux.Handle("/printshop/profile", middleware.LogMiddleware(printShopChain(printShopConsoleHandler.GetShopProfile)))
 	mux.Handle("/printshop/profile/create", middleware.LogMiddleware(printShopChain(printShopConsoleHandler.CreateShopProfile)))
@@ -136,6 +141,12 @@ func setupRoutes() http.Handler {
 	// Order matching endpoints (admin/authenticated)
 	mux.Handle("/orders/matches", middleware.LogMiddleware(protected(http.HandlerFunc(matchingHandler.GetOrderMatches))))
 	mux.Handle("/orders/assign", middleware.LogMiddleware(protected(http.HandlerFunc(matchingHandler.AssignShopToOrder))))
+
+	// Admin artwork review endpoints
+	mux.Handle("/admin/artworks", middleware.LogMiddleware(adminChain(handlers.GetAdminArtworksHandler)))
+	mux.Handle("/admin/artworks/get", middleware.LogMiddleware(adminChain(handlers.GetAdminArtworkHandler)))
+	mux.Handle("/admin/artworks/resolve", middleware.LogMiddleware(adminChain(handlers.ResolveArtworkHandler)))
+	mux.Handle("/admin/artworks/assign", middleware.LogMiddleware(adminChain(handlers.AssignArtworkHandler)))
 
 	// Payment endpoints
 	mux.Handle("/payments/create", middleware.LogMiddleware(protected(http.HandlerFunc(paymentHandler.CreatePaymentHandler))))

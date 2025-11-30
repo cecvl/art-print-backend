@@ -1,6 +1,6 @@
 # Default Dockerfile - builds server by default
 # For production, use Dockerfile.server or Dockerfile.seed explicitly
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25.4-alpine AS builder
 
 WORKDIR /build
 

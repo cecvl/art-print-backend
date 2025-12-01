@@ -157,6 +157,46 @@ func setupRoutes() http.Handler {
 	mux.Handle("/admin/frames", middleware.LogMiddleware(adminChain(handlers.GetAdminFramesHandler)))
 	mux.Handle("/admin/frames/resolve", middleware.LogMiddleware(adminChain(handlers.ResolveFrameHandler)))
 
+	// Admin users management
+	mux.Handle("/admin/users", middleware.LogMiddleware(adminChain(handlers.GetAdminUsersHandler)))
+	mux.Handle("/admin/users/get", middleware.LogMiddleware(adminChain(handlers.GetAdminUserHandler)))
+	mux.Handle("/admin/users/update-roles", middleware.LogMiddleware(adminChain(handlers.UpdateUserRolesHandler)))
+	mux.Handle("/admin/users/deactivate", middleware.LogMiddleware(adminChain(handlers.DeactivateUserHandler)))
+	mux.Handle("/admin/users/reactivate", middleware.LogMiddleware(adminChain(handlers.ReactivateUserHandler)))
+
+	// Admin orders management
+	mux.Handle("/admin/orders", middleware.LogMiddleware(adminChain(handlers.GetAdminOrdersHandler)))
+	mux.Handle("/admin/orders/get", middleware.LogMiddleware(adminChain(handlers.GetAdminOrderHandler)))
+	mux.Handle("/admin/orders/update-status", middleware.LogMiddleware(adminChain(handlers.UpdateOrderStatusHandler)))
+	mux.Handle("/admin/orders/reassign", middleware.LogMiddleware(adminChain(handlers.ReassignOrderHandler)))
+	mux.Handle("/admin/orders/cancel", middleware.LogMiddleware(adminChain(handlers.CancelOrderHandler)))
+	mux.Handle("/admin/orders/refund", middleware.LogMiddleware(adminChain(handlers.RefundOrderHandler)))
+
+	// Admin payments management
+	mux.Handle("/admin/payments", middleware.LogMiddleware(adminChain(handlers.GetAdminPaymentsHandler)))
+	mux.Handle("/admin/payments/get", middleware.LogMiddleware(adminChain(handlers.GetAdminPaymentHandler)))
+	mux.Handle("/admin/payments/verify", middleware.LogMiddleware(adminChain(handlers.VerifyPaymentAdminHandler)))
+	mux.Handle("/admin/payments/refund", middleware.LogMiddleware(adminChain(handlers.RefundPaymentAdminHandler)))
+
+	// Admin printshops / catalog
+	mux.Handle("/admin/printshops", middleware.LogMiddleware(adminChain(handlers.GetAdminPrintShopsHandler)))
+	mux.Handle("/admin/printshops/get", middleware.LogMiddleware(adminChain(handlers.GetAdminPrintShopHandler)))
+	mux.Handle("/admin/printshops/update-service-price", middleware.LogMiddleware(adminChain(handlers.UpdateServicePriceHandler)))
+
+	// Admin reports
+	mux.Handle("/admin/reports/sales-monthly", middleware.LogMiddleware(adminChain(handlers.SalesMonthlyHandler)))
+
+	// Developer-only admin seed/simulate endpoints (guarded by APP_ENV)
+	mux.Handle("/admin/dev/simulate-orders", middleware.LogMiddleware(adminChain(handlers.SimulateOrdersHandler)))
+	mux.Handle("/admin/dev/add-services", middleware.LogMiddleware(adminChain(handlers.AddServicesHandler)))
+
+	// Admin signups
+	mux.Handle("/admin/signups", middleware.LogMiddleware(adminChain(handlers.GetAdminSignupsHandler)))
+
+	// Admin artists (detailed)
+	mux.Handle("/admin/artists", middleware.LogMiddleware(adminChain(handlers.GetAdminArtistsHandler)))
+	mux.Handle("/admin/artists/get", middleware.LogMiddleware(adminChain(handlers.GetAdminArtistHandler)))
+
 	// Payment endpoints
 	mux.Handle("/payments/create", middleware.LogMiddleware(protected(http.HandlerFunc(paymentHandler.CreatePaymentHandler))))
 	mux.Handle("/payments/verify", middleware.LogMiddleware(protected(http.HandlerFunc(paymentHandler.VerifyPaymentHandler))))

@@ -98,7 +98,7 @@ func UpdateServicePriceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	repo := repositories.NewPrintShopRepository(firebase.FirestoreClient)
-	updates := map[string]interface{}{"price": body.Price, "updatedAt": time.Now()}
+	updates := map[string]interface{}{"basePrice": body.Price, "updatedAt": time.Now()}
 	if err := repo.UpdateService(ctx, body.ServiceID, updates); err != nil {
 		log.Printf("❌ failed to update service price: %v", err)
 		http.Error(w, "failed to update service", http.StatusInternalServerError)

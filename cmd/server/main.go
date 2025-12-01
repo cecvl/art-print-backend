@@ -126,6 +126,9 @@ func setupRoutes() http.Handler {
 	mux.Handle("/printshop/frames/list", middleware.LogMiddleware(printShopChain(handlers.GetFramesHandler)))
 	mux.Handle("/printshop/frames/remove", middleware.LogMiddleware(printShopChain(handlers.RemoveFrameHandler)))
 
+	// Printshop can report fulfillment issues
+	mux.Handle("/printshop/orders/report-issue", middleware.LogMiddleware(printShopChain(handlers.PrintShopReportIssueHandler)))
+
 	// Configuration management - Sizes
 	mux.Handle("/printshop/sizes", middleware.LogMiddleware(printShopChain(printShopConfigHandler.GetSizes)))
 	mux.Handle("/printshop/sizes/create", middleware.LogMiddleware(printShopChain(printShopConfigHandler.CreateSize)))
@@ -183,6 +186,10 @@ func setupRoutes() http.Handler {
 	mux.Handle("/admin/printshops/get", middleware.LogMiddleware(adminChain(handlers.GetAdminPrintShopHandler)))
 	mux.Handle("/admin/printshops/update-service-price", middleware.LogMiddleware(adminChain(handlers.UpdateServicePriceHandler)))
 
+	// Admin service management: create, enable/disable
+	mux.Handle("/admin/printshops/service-add", middleware.LogMiddleware(adminChain(handlers.AdminCreateServiceHandler)))
+	mux.Handle("/admin/printshops/service-status", middleware.LogMiddleware(adminChain(handlers.UpdateServiceStatusHandler)))
+
 	// Admin reports
 	mux.Handle("/admin/reports/sales-monthly", middleware.LogMiddleware(adminChain(handlers.SalesMonthlyHandler)))
 
@@ -203,6 +210,9 @@ func setupRoutes() http.Handler {
 	mux.Handle("/payments", middleware.LogMiddleware(protected(http.HandlerFunc(paymentHandler.GetPaymentsHandler))))
 	mux.Handle("/payments/webhook/", middleware.LogMiddleware(http.HandlerFunc(paymentHandler.PaymentWebhookHandler)))
 	mux.Handle("/payments/refund", middleware.LogMiddleware(protected(http.HandlerFunc(paymentHandler.RefundPaymentHandler))))
+
+	// allow buyer/artist to select printshop for an order
+	mux.Handle("/orders/select-printshop", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.SelectPrintShopHandler))))
 
 	return middleware.CORS(mux)
 }

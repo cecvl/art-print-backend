@@ -197,6 +197,88 @@ Admin endpoints require:
 1. Standard authentication (session cookie)
 2. `admin` role in user profile
 
+### Admin API — Routes & Expected Use
+
+This subsection lists the primary Admin HTTP endpoints implemented in the backend, the required auth, expected query/body shapes and typical usage. All admin routes are protected by the `AuthMiddleware` + `AdminOnly` middleware chain.
+
+- **List users**
+   - Method / Path: `GET /admin/users`
+   - Auth: Admin
+   - Query: `?role=artist|buyer|printShop&isActive=true|false&limit=50`
+   - Response: `{ "users": [ { uid, email, name, roles, createdAt } ] }`
+   - Use: review user accounts, filter by role and status.
+
+- **Get user detail**
+   - Method / Path: `GET /admin/users/get?uid={uid}`
+   - Auth: Admin
+   - Response: `{ "user": { ...user fields..., activity: [...] } }`
+
+- **Update user roles**
+   - Method / Path: `POST /admin/users/update-roles`
+   - Body: `{ "uid": "...", "roles": ["artist","buyer"] }`
+   - Use: grant or revoke roles; writes an `admin_actions` audit entry.
+
+- **Deactivate / Reactivate user**
+   - Method / Path: `POST /admin/users/deactivate` and `POST /admin/users/reactivate`
+   - Body: `{ "uid": "...", "reason": "..." }`
+
+- **Orders list & detail**
+   - Method / Path: `GET /admin/orders` and `GET /admin/orders/get?orderId={id}`
+   - Query filters: `status`, `buyerId`, `printShopId`, `createdAfter`, `limit`
+   - Use: view and filter platform orders; detail includes order + payments.
+
+- **Update order status / reassign / cancel / refund**
+   - `POST /admin/orders/update-status` Body: `{ "orderId":"...","status":"confirmed","note":"..." }`
+   - `POST /admin/orders/reassign` Body: `{ "orderId":"...","printShopId":"..." }`
+   - `POST /admin/orders/cancel` Body: `{ "orderId":"...","reason":"..." }`
+   - `POST /admin/orders/refund` Body: `{ "orderId":"..." }` or `{ "paymentId":"..." }` — calls PaymentService to refund and writes `admin_actions`.
+
+- **Payments**
+   - `GET /admin/payments` — list payments (filter by status)
+   - `GET /admin/payments/get?paymentId={id}` — payment detail
+   - `POST /admin/payments/verify` — trigger provider verify
+   - `POST /admin/payments/refund` — admin-initiated refund (calls provider)
+
+- **Printshops & Services**
+   - `GET /admin/printshops` — list shops
+   - `GET /admin/printshops/get?shopId={id}` — shop + `services[]`
+   - `POST /admin/printshops/update-service-price` Body: `{ "serviceId":"...","price": 12.34 }` — updates `basePrice` and writes `admin_actions`
+   - `POST /admin/printshops/service-add` Body: `{ "shopId":"...","service":{...} }` — admin creates service, writes `services_changes` and `admin_actions`
+   - `POST /admin/printshops/service-status` Body: `{ "serviceId":"...","isActive":true|false,"reason":"..." }` — enable/disable service and write `services_changes` and `admin_actions`
+
+- **Artists & Signups**
+   - `GET /admin/artists` — list artists with their artworks
+   - `GET /admin/artists/get?artistId={id}` — artist detail and artworks
+   - `GET /admin/signups` — list pending signups (isActive==false)
+
+- **Artworks & Frames review**
+   - `GET /admin/artworks` — list artworks requiring review
+   - `GET /admin/artworks/get?artworkId={id}` — artwork detail
+   - `POST /admin/artworks/resolve` — approve/reject artwork
+   - `GET /admin/frames` / `POST /admin/frames/resolve` — frame review flows
+
+- **Reports**
+   - `GET /admin/reports/sales-monthly?from=YYYY-MM-DDTHH:MM:SSZ&to=...&shopId=...&artistId=...`
+   - Response: `{ "series": [ { "month": "YYYY-MM", "orders": N, "revenue": F } ] }`
+   - Use: power charts for monthly sales; uses completed/confirmed orders only.
+
+- **Dev / Simulation (Dev-only, gated by `APP_ENV=dev` or `ADMIN_DEV_ALLOW=true`)**
+   - `POST /admin/dev/add-services` — create multiple `services` for a shop (writes `services_changes`)
+   - `POST /admin/dev/simulate-orders` — generate synthetic orders and payments over N months (writes orders + payments). Intended for development; must be disabled in production.
+
+- **Printshop fulfillment & issue reporting**
+   - `POST /printshop/orders/report-issue` — (PrintShopAuth) report fulfillment issues; writes `printshop_issues` and appends admin note to order.
+   - Admins can view `printshop_issues` collection and use order endpoints to reassign/refund/etc.
+
+- **Buyer/Artist order actions**
+   - `POST /orders/select-printshop` — allows buyer or an artist (who owns any artwork in the order) to select a `printShopId` for a pending order. Updates order doc and writes `admin_actions`.
+
+- **Audit & change history**
+   - `admin_actions` collection: all admin mutations write an audit record `{ action, resourceType, resourceId, performedBy, createdAt, details }`.
+   - `services_changes` collection: service create/price-change/disable events for traceability.
+
+Use this section as a quick reference for the admin UI and for QA test cases. For any production migration we should add explicit confirmations and feature flags for destructive admin actions (refunds, large simulations, mass updates).
+
 ## Service Architecture
 
 ### How Services Work Together

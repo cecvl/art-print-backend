@@ -31,7 +31,7 @@ func loadEnv() string {
 
 // runSeeders seeds demo data in development mode
 func runSeeders(env string) {
-	if env != "dev" {
+	if env != "dev" && env != "staging" {
 		return
 	}
 	ctx := context.Background()
@@ -229,7 +229,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3001"
+		port = "8080"
 	}
 
 	handler := setupRoutes()

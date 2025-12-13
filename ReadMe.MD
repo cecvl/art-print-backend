@@ -16,7 +16,7 @@ Back-end for an art prints' sales platform
 
 ### Curl commands to test server
 
--`sign up`: curl -X POST http://localhost:3001/signup \
+-`sign up`: curl -X POST http://localhost:8080/signup \
  -H "Content-Type: application/json" \
  -d '{
 "email": "useruser@gmail.com",
@@ -24,16 +24,16 @@ Back-end for an art prints' sales platform
 "userType": "artist"
 }'
 
-- curl -X GET http://localhost:3001/artworks
-- curl -X POST http://localhost:3001/cart/add -H "Authorization: Bearer ID_TOKEN" -H "Content-Type: application/json" -d '{
+- curl -X GET http://localhost:8080/artworks
+- curl -X POST http://localhost:8080/cart/add -H "Authorization: Bearer ID_TOKEN" -H "Content-Type: application/json" -d '{
   "artworkId": "7HCcdzetfE69uFLtTfGd",
   "title": "",
   "quantity": 1,
   "price": 1500.00
   }'
 
-- curl -X GET http://localhost:3001/cart -H "Authorization: Bearer ID_TOKEN"
-- curl -X POST http://localhost:3001/checkout -H "Authorization: Bearer ID_TOKEN"
+- curl -X GET http://localhost:8080/cart -H "Authorization: Bearer ID_TOKEN"
+- curl -X POST http://localhost:8080/checkout -H "Authorization: Bearer ID_TOKEN"
 
 # Make commands
 Run `make --version` to check installation
@@ -48,6 +48,25 @@ Run `make --version` to check installation
 `make seed` - seed json data
 
 `make emulators` - run firebase emulators
+
+### Running in Production Mode (Docker)
+
+To run the server in a production-like environment (using Docker, without seed data):
+
+1. Ensure you have `docker` and `docker compose` installed.
+2. Place your `firebase-service-account.json` file in the `configs/` directory.
+3. Run the helper script:
+
+```bash
+./run-prod.sh
+```
+
+This script will:
+- Verify your credentials exist.
+- Build the Docker container.
+- Start the server on port 8080.
+- Connect to the real Firebase project (not emulators).
+
 
 # Quick Start with Docker
 

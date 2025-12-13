@@ -92,7 +92,7 @@ docker build -f Dockerfile.server -t art-print-server:latest .
 docker build -f Dockerfile.seed -t art-print-seed:latest .
 
 # Run server container (development)
-docker run -p 3001:3001 \
+docker run -p 8080:8080 \
   -e APP_ENV=dev \
   -e GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json \
   -e FIREBASE_PROJECT_ID=your-project-id \
@@ -100,7 +100,7 @@ docker run -p 3001:3001 \
   art-print-server:latest
 
 # Run server container (production-like, no seed data)
-docker run -p 3001:3001 \
+docker run -p 8080:8080 \
   -e APP_ENV=production \
   -e GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json \
   -e FIREBASE_PROJECT_ID=your-project-id \
@@ -189,12 +189,12 @@ gcloud run deploy art-print-server \
   --region ${REGION} \
   --platform managed \
   --allow-unauthenticated \
-  --port 3001 \
+  --port 8080 \
   --memory 512Mi \
   --cpu 1 \
   --min-instances 0 \
   --max-instances 10 \
-  --set-env-vars APP_ENV=production,PORT=3001 \
+  --set-env-vars APP_ENV=production,PORT=8080 \
   --set-secrets GOOGLE_APPLICATION_CREDENTIALS=firebase-service-account:latest
 ```
 
@@ -245,7 +245,7 @@ Docker health checks are configured to use this endpoint.
 
 ### Server Container
 - `APP_ENV`: Application environment (`dev`, `production`)
-- `PORT`: Server port (default: `3001`)
+- `PORT`: Server port (default: `8080`)
 - `GOOGLE_APPLICATION_CREDENTIALS`: Path to Firebase service account JSON
 - `FIREBASE_PROJECT_ID`: Firebase project ID
 - `FIRESTORE_EMULATOR_HOST`: Firestore emulator host (for local dev)
@@ -265,7 +265,7 @@ Docker health checks are configured to use this endpoint.
 - Check logs: `docker logs <container-name>`
 - Verify environment variables are set correctly
 - Ensure Firebase credentials are accessible
-- Check health endpoint: `curl http://localhost:3001/health`
+- Check health endpoint: `curl http://localhost:8080/health`
 
 ### GCP Deployment Issues
 - Verify Artifact Registry repository exists

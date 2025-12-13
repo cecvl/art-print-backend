@@ -166,3 +166,142 @@ func RemoveFrameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// UpdateFramePricingHandler allows print shop to update frame pricing
+func UpdateFramePricingHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	uid := ctx.Value("userId")
+	if uid == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	shopID := uid.(string)
+
+	var payload struct {
+		FrameID     string             `json:"frameId"`
+		BasePrice   float64            `json:"basePrice"`
+		SizePricing map[string]float64 `json:"sizePricing,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	if payload.FrameID == "" {
+		http.Error(w, "frameId required", http.StatusBadRequest)
+		return
+	}
+
+	// Verify ownership
+	docRef := firebase.FirestoreClient.Collection("frames").Doc(payload.FrameID)
+	doc, err := docRef.Get(ctx)
+	if err != nil || !doc.Exists() {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	if doc.Data()["shopId"] != shopID {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Update pricing
+	updates := []firestore.Update{
+		{Path: "basePrice", Value: payload.BasePrice},
+		{Path: "updatedAt", Value: time.Now()},
+	}
+	if payload.SizePricing != nil {
+		updates = append(updates, firestore.Update{Path: "sizePricing", Value: payload.SizePricing})
+	}
+
+	if _, err := docRef.Update(ctx, updates); err != nil {
+		log.Printf("❌ failed to update frame pricing %s: %v", payload.FrameID, err)
+		http.Error(w, "update failed", http.StatusInternalServerError)
+		return
+	}
+
+	// Return updated frame
+	updatedDoc, _ := docRef.Get(ctx)
+	result := updatedDoc.Data()
+	result["id"] = updatedDoc.Ref.ID
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// UpdateFrameDetailsHandler allows print shop to update frame details (type, material, name, description)
+func UpdateFrameDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	uid := ctx.Value("userId")
+	if uid == nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	shopID := uid.(string)
+
+	var payload struct {
+		FrameID     string `json:"frameId"`
+		Type        string `json:"type,omitempty"`
+		Material    string `json:"material,omitempty"`
+		Name        string `json:"name,omitempty"`
+		Description string `json:"description,omitempty"`
+		IsActive    *bool  `json:"isActive,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	if payload.FrameID == "" {
+		http.Error(w, "frameId required", http.StatusBadRequest)
+		return
+	}
+
+	// Verify ownership
+	docRef := firebase.FirestoreClient.Collection("frames").Doc(payload.FrameID)
+	doc, err := docRef.Get(ctx)
+	if err != nil || !doc.Exists() {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	if doc.Data()["shopId"] != shopID {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Build updates
+	updates := []firestore.Update{
+		{Path: "updatedAt", Value: time.Now()},
+	}
+	if payload.Type != "" {
+		updates = append(updates, firestore.Update{Path: "type", Value: payload.Type})
+	}
+	if payload.Material != "" {
+		updates = append(updates, firestore.Update{Path: "material", Value: payload.Material})
+	}
+	if payload.Name != "" {
+		updates = append(updates, firestore.Update{Path: "name", Value: payload.Name})
+	}
+	if payload.Description != "" {
+		updates = append(updates, firestore.Update{Path: "description", Value: payload.Description})
+	}
+	if payload.IsActive != nil {
+		updates = append(updates, firestore.Update{Path: "isActive", Value: *payload.IsActive})
+	}
+
+	if len(updates) == 1 {
+		http.Error(w, "no fields to update", http.StatusBadRequest)
+		return
+	}
+
+	if _, err := docRef.Update(ctx, updates); err != nil {
+		log.Printf("❌ failed to update frame %s: %v", payload.FrameID, err)
+		http.Error(w, "update failed", http.StatusInternalServerError)
+		return
+	}
+
+	// Return updated frame
+	updatedDoc, _ := docRef.Get(ctx)
+	result := updatedDoc.Data()
+	result["id"] = updatedDoc.Ref.ID
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}

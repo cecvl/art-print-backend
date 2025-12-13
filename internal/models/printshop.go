@@ -19,20 +19,32 @@ type PrintShopProfile struct {
 }
 
 // PrintService represents a specific service offered by a print shop
+// This is a variant combining substrate + medium (e.g., Canvas + Oil Paint)
 type PrintService struct {
-	ID          string      `firestore:"id" json:"id"`
-	ShopID      string      `firestore:"shopId" json:"shopId"`
-	Name        string      `firestore:"name" json:"name"`
-	Description string      `firestore:"description" json:"description"`
-	Technology  string      `firestore:"technology" json:"technology"`
-	BasePrice   float64     `firestore:"basePrice" json:"basePrice"`
-	PriceMatrix PriceMatrix `firestore:"priceMatrix" json:"priceMatrix"`
-	IsActive    bool        `firestore:"isActive" json:"isActive"`
-	CreatedAt   time.Time   `firestore:"createdAt" json:"createdAt"`
-	UpdatedAt   time.Time   `firestore:"updatedAt" json:"updatedAt"`
+	ID            string             `firestore:"id" json:"id"`
+	ShopID        string             `firestore:"shopId" json:"shopId"`
+	Name          string             `firestore:"name" json:"name"`
+	Description   string             `firestore:"description" json:"description"`
+	SubstrateID   string             `firestore:"substrateId" json:"substrateId"`                   // References Material/Substrate
+	MediumID      string             `firestore:"mediumId" json:"mediumId"`                         // References Medium
+	Technology    *TechnologyDetails `firestore:"technology,omitempty" json:"technology,omitempty"` // Optional
+	SizePricing   map[string]float64 `firestore:"sizePricing" json:"sizePricing"`                   // Size name -> total price
+	QuantityTiers []QuantityTier     `firestore:"quantityTiers" json:"quantityTiers"`               // Optional quantity discounts
+	RushOrderFee  float64            `firestore:"rushOrderFee" json:"rushOrderFee"`                 // Optional rush fee
+	IsActive      bool               `firestore:"isActive" json:"isActive"`
+	CreatedAt     time.Time          `firestore:"createdAt" json:"createdAt"`
+	UpdatedAt     time.Time          `firestore:"updatedAt" json:"updatedAt"`
 }
 
-// PriceMatrix for dynamic pricing
+// TechnologyDetails provides optional metadata about production method
+type TechnologyDetails struct {
+	Type        string `firestore:"type" json:"type"`                                   // digital, screen-print, lithograph, giclée
+	IsHandMade  bool   `firestore:"isHandMade" json:"isHandMade"`                       // Hand-made vs machine
+	MachineType string `firestore:"machineType,omitempty" json:"machineType,omitempty"` // e.g., "Epson SureColor P9000"
+	Process     string `firestore:"process,omitempty" json:"process,omitempty"`         // e.g., "12-color archival inkjet"
+}
+
+// PriceMatrix for backward compatibility (deprecated - use PrintService.SizePricing instead)
 type PriceMatrix struct {
 	SizeModifiers   map[string]float64 `firestore:"sizeModifiers" json:"sizeModifiers"`     // Size name -> multiplier
 	QuantityTiers   []QuantityTier     `firestore:"quantityTiers" json:"quantityTiers"`     // Quantity discount tiers
@@ -85,16 +97,18 @@ type ContactInfo struct {
 
 // Frame configuration for print shops
 type Frame struct {
-	ID          string    `firestore:"id" json:"id"`
-	ShopID      string    `firestore:"shopId" json:"shopId"`
-	Type        string    `firestore:"type" json:"type"`         // classic, modern, premium, minimalist
-	Material    string    `firestore:"material" json:"material"` // wood, metal, acrylic, composite
-	Name        string    `firestore:"name" json:"name"`         // Display name
-	Description string    `firestore:"description" json:"description"`
-	Price       float64   `firestore:"price" json:"price"` // Base price for this frame
-	IsActive    bool      `firestore:"isActive" json:"isActive"`
-	CreatedAt   time.Time `firestore:"createdAt" json:"createdAt"`
-	UpdatedAt   time.Time `firestore:"updatedAt" json:"updatedAt"`
+	ID          string             `firestore:"id" json:"id"`
+	ShopID      string             `firestore:"shopId" json:"shopId"`
+	Type        string             `firestore:"type" json:"type"`         // classic, modern, premium, minimalist
+	Material    string             `firestore:"material" json:"material"` // wood, metal, acrylic, composite
+	Name        string             `firestore:"name" json:"name"`         // Display name
+	Description string             `firestore:"description" json:"description"`
+	ImageURL    string             `firestore:"imageUrl,omitempty" json:"imageUrl,omitempty"`       // Frame preview image
+	BasePrice   float64            `firestore:"basePrice" json:"basePrice"`                         // Default price
+	SizePricing map[string]float64 `firestore:"sizePricing,omitempty" json:"sizePricing,omitempty"` // Optional: size-specific pricing
+	IsActive    bool               `firestore:"isActive" json:"isActive"`
+	CreatedAt   time.Time          `firestore:"createdAt" json:"createdAt"`
+	UpdatedAt   time.Time          `firestore:"updatedAt" json:"updatedAt"`
 }
 
 // PrintSize configuration for print shops
@@ -113,13 +127,26 @@ type PrintSize struct {
 }
 
 // Material/Substrate configuration for print shops
+// Substrate = the surface (canvas, wood, paper, metal, linen)
 type Material struct {
 	ID          string    `firestore:"id" json:"id"`
 	ShopID      string    `firestore:"shopId" json:"shopId"`
-	Type        string    `firestore:"type" json:"type"` // matte, glossy, canvas, metal, paper, premium
+	Type        string    `firestore:"type" json:"type"` // canvas, wood, paper, metal, linen, fabric
 	Name        string    `firestore:"name" json:"name"` // Display name
 	Description string    `firestore:"description" json:"description"`
-	Markup      float64   `firestore:"markup" json:"markup"` // Multiplier for base price (e.g., 1.2 = 20% markup)
+	IsActive    bool      `firestore:"isActive" json:"isActive"`
+	CreatedAt   time.Time `firestore:"createdAt" json:"createdAt"`
+	UpdatedAt   time.Time `firestore:"updatedAt" json:"updatedAt"`
+}
+
+// Medium configuration for print shops
+// Medium = the substance used (paint, ink, dye, pigment)
+type Medium struct {
+	ID          string    `firestore:"id" json:"id"`
+	ShopID      string    `firestore:"shopId" json:"shopId"`
+	Type        string    `firestore:"type" json:"type"` // oil-paint, acrylic, ink, dye, pigment, watercolor
+	Name        string    `firestore:"name" json:"name"` // Display name
+	Description string    `firestore:"description" json:"description"`
 	IsActive    bool      `firestore:"isActive" json:"isActive"`
 	CreatedAt   time.Time `firestore:"createdAt" json:"createdAt"`
 	UpdatedAt   time.Time `firestore:"updatedAt" json:"updatedAt"`

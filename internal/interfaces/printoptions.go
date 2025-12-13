@@ -13,13 +13,17 @@ type FrameOption struct {
 	Price    int    `json:"price"`
 }
 
+// MaterialOption represents the substrate (e.g., canvas, wood, paper, metal, linen)
 type MaterialOption struct {
 	Type       string  `json:"type"`
+	Name       string  `json:"name"`
 	Multiplier float64 `json:"multiplier"`
 }
 
+// MediumOption represents the substance used (e.g., paint, ink, charcoal)
 type MediumOption struct {
 	Type      string `json:"type"`
+	Name      string `json:"name"`
 	BasePrice int    `json:"basePrice"`
 }
 
@@ -76,7 +80,14 @@ type PrintService struct {
 	ID          string      `json:"id"`
 	ShopID      string      `json:"shopId"`
 	Name        string      `json:"name"`
-	Technology  string      `json:"technology"`
+	
+	// Technology describes the process (e.g., hand-made, machine, giclee). Optional.
+	Technology  string      `json:"technology,omitempty"`
+	
+	// Variants offered by this service
+	Materials   []MaterialOption `json:"materials"` // Substrates
+	Mediums     []MediumOption   `json:"mediums"`   // Substances
+	
 	BasePrice   float64     `json:"basePrice"`
 	PriceMatrix PriceMatrix `json:"priceMatrix"`
 }

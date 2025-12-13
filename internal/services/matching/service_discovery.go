@@ -54,13 +54,18 @@ func (sd *ServiceDiscovery) FindMatchingShops(ctx context.Context, options model
 				// Calculate match score (basic - will be enhanced in smart matcher)
 				matchScore := sd.calculateBasicScore(shop, service, totalPrice)
 
+				techType := ""
+				if service.Technology != nil {
+					techType = service.Technology.Type
+				}
+
 				matches = append(matches, models.ShopMatch{
 					ShopID:       shop.ID,
 					ShopName:     shop.Name,
 					ServiceID:    service.ID,
 					TotalPrice:   totalPrice,
 					MatchScore:   matchScore,
-					Technology:   service.Technology,
+					Technology:   techType,
 					DeliveryDays: sd.estimateDeliveryDays(shop, service, options),
 				})
 			}
@@ -72,15 +77,18 @@ func (sd *ServiceDiscovery) FindMatchingShops(ctx context.Context, options model
 
 // serviceSupportsOptions checks if a service can fulfill the order options
 func (sd *ServiceDiscovery) serviceSupportsOptions(service *models.PrintService, options models.PrintOrderOptions) bool {
-	matrix := service.PriceMatrix
-
-	// Check size support (if sizeModifiers is empty, supports all sizes)
-	if len(matrix.SizeModifiers) > 0 {
-		if _, ok := matrix.SizeModifiers[options.Size]; !ok {
+	// Check size support
+	if len(service.SizePricing) > 0 {
+		if _, ok := service.SizePricing[options.Size]; !ok {
 			return false
 		}
 	}
 
+	// TODO: Check material and medium support by resolving SubstrateID and MediumID
+	// For now, we assume if the service is active and has the size, it's a candidate
+	// matrix := service.PriceMatrix // Deprecated
+
+	/*
 	// Check material support
 	if len(matrix.MaterialMarkups) > 0 {
 		if _, ok := matrix.MaterialMarkups[options.Material]; !ok {
@@ -101,6 +109,7 @@ func (sd *ServiceDiscovery) serviceSupportsOptions(service *models.PrintService,
 			return false
 		}
 	}
+	*/
 
 	return true
 }

@@ -199,18 +199,9 @@ func (r *PrintShopRepository) CreateService(ctx context.Context, service *models
 		service.UpdatedAt = time.Now()
 	}
 
-	// Initialize empty PriceMatrix if not set
-	if service.PriceMatrix.SizeModifiers == nil {
-		service.PriceMatrix.SizeModifiers = make(map[string]float64)
-	}
-	if service.PriceMatrix.MaterialMarkups == nil {
-		service.PriceMatrix.MaterialMarkups = make(map[string]float64)
-	}
-	if service.PriceMatrix.MediumMarkups == nil {
-		service.PriceMatrix.MediumMarkups = make(map[string]float64)
-	}
-	if service.PriceMatrix.FramePrices == nil {
-		service.PriceMatrix.FramePrices = make(map[string]float64)
+	// Initialize empty maps if not set
+	if service.SizePricing == nil {
+		service.SizePricing = make(map[string]float64)
 	}
 
 	_, err := r.client.Collection("services").Doc(service.ID).Set(ctx, service)

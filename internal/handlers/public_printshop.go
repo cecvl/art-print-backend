@@ -200,11 +200,17 @@ func (h *PublicPrintShopHandler) MatchShopsForOrder(w http.ResponseWriter, r *ht
 			}
 
 			// Check if service supports the requested options
-			matrix := service.PriceMatrix
-			hasSize := len(matrix.SizeModifiers) == 0 || matrix.SizeModifiers[options.Size] > 0
-			hasMaterial := len(matrix.MaterialMarkups) == 0 || matrix.MaterialMarkups[options.Material] > 0
-			hasMedium := len(matrix.MediumMarkups) == 0 || matrix.MediumMarkups[options.Medium] > 0
-			hasFrame := len(matrix.FramePrices) == 0 || matrix.FramePrices[options.Frame] > 0
+			// matrix := service.PriceMatrix // Deprecated
+			
+			// Check size availability
+			_, hasSize := service.SizePricing[options.Size]
+			
+			// TODO: Resolve SubstrateID and MediumID to check against options.Material and options.Medium
+			// For now, we assume if the service is active and has the size, it's a candidate
+			// This needs to be updated to fetch Material/Medium details or cache them
+			hasMaterial := true 
+			hasMedium := true
+			hasFrame := true // Frame check also needs update as frames are separate
 
 			// If service supports all options, calculate price
 			if hasSize && hasMaterial && hasMedium && hasFrame {
@@ -214,13 +220,18 @@ func (h *PublicPrintShopHandler) MatchShopsForOrder(w http.ResponseWriter, r *ht
 				// Lower price = higher score (will be enhanced in smart matching)
 				matchScore := 100.0 / (1.0 + totalPrice/100.0) // Normalize score
 
+				techType := ""
+				if service.Technology != nil {
+					techType = service.Technology.Type
+				}
+
 				matches = append(matches, models.ShopMatch{
 					ShopID:       shop.ID,
 					ShopName:     shop.Name,
 					ServiceID:    service.ID,
 					TotalPrice:   totalPrice,
 					MatchScore:   matchScore,
-					Technology:   service.Technology,
+					Technology:   techType,
 					DeliveryDays: 5, // Default, can be enhanced later
 				})
 			}

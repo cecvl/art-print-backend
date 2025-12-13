@@ -45,7 +45,11 @@ func (h *PrintShopServiceConfigHandler) GetServicePricing(w http.ResponseWriter,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(service.PriceMatrix)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"sizePricing":   service.SizePricing,
+		"quantityTiers": service.QuantityTiers,
+		"rushOrderFee":  service.RushOrderFee,
+	})
 }
 
 // UpdateServicePricing updates the price matrix for a service
@@ -69,17 +73,33 @@ func (h *PrintShopServiceConfigHandler) UpdateServicePricing(w http.ResponseWrit
 		return
 	}
 
-	// Parse price matrix update
-	var priceMatrix models.PriceMatrix
-	if err := json.NewDecoder(r.Body).Decode(&priceMatrix); err != nil {
+	// Parse pricing update
+	var payload struct {
+		SizePricing   map[string]float64    `json:"sizePricing"`
+		QuantityTiers []models.QuantityTier `json:"quantityTiers,omitempty"`
+		RushOrderFee  float64               `json:"rushOrderFee,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		log.Printf("❌ Invalid request body: %v", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Update service with new price matrix
+	// Validate size pricing is provided
+	if len(payload.SizePricing) == 0 {
+		http.Error(w, "sizePricing is required", http.StatusBadRequest)
+		return
+	}
+
+	// Update service with new pricing
 	updates := map[string]interface{}{
-		"priceMatrix": priceMatrix,
+		"sizePricing": payload.SizePricing,
+	}
+	if payload.QuantityTiers != nil {
+		updates["quantityTiers"] = payload.QuantityTiers
+	}
+	if payload.RushOrderFee > 0 {
+		updates["rushOrderFee"] = payload.RushOrderFee
 	}
 
 	if err := h.repo.UpdateService(ctx, serviceID, updates); err != nil {
@@ -91,7 +111,11 @@ func (h *PrintShopServiceConfigHandler) UpdateServicePricing(w http.ResponseWrit
 	// Return updated service
 	updatedService, _ := h.repo.GetServiceByID(ctx, serviceID)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(updatedService.PriceMatrix)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"sizePricing":   updatedService.SizePricing,
+		"quantityTiers": updatedService.QuantityTiers,
+		"rushOrderFee":  updatedService.RushOrderFee,
+	})
 }
 
 // CalculateServicePrice calculates price for given options (for testing/validation)
@@ -137,40 +161,26 @@ func (h *PrintShopServiceConfigHandler) CalculateServicePrice(w http.ResponseWri
 
 // calculatePrice calculates the total price based on service and options
 func calculatePrice(service *models.PrintService, options models.PrintOrderOptions) float64 {
-	matrix := service.PriceMatrix
-	price := service.BasePrice
-
-	// Apply size modifier
-	if modifier, ok := matrix.SizeModifiers[options.Size]; ok {
-		price *= modifier
+	// Get base price for the size from the service's size pricing
+	price, ok := service.SizePricing[options.Size]
+	if !ok {
+		return 0 // Size not supported by this service
 	}
 
-	// Apply material markup
-	if markup, ok := matrix.MaterialMarkups[options.Material]; ok {
-		price *= markup
-	}
+	// Note: Frame pricing is handled separately and added by the caller if needed
+	// This allows frames to have their own size-specific pricing
 
-	// Apply medium markup
-	if markup, ok := matrix.MediumMarkups[options.Medium]; ok {
-		price *= markup
-	}
-
-	// Add frame price
-	if framePrice, ok := matrix.FramePrices[options.Frame]; ok {
-		price += framePrice
-	}
-
-	// Apply quantity discount
-	for _, tier := range matrix.QuantityTiers {
-		if options.Quantity >= tier.MinQuantity && options.Quantity <= tier.MaxQuantity {
+	// Apply quantity discount if configured
+	for _, tier := range service.QuantityTiers {
+		if options.Quantity >= tier.MinQuantity && (tier.MaxQuantity == 0 || options.Quantity <= tier.MaxQuantity) {
 			price *= (1.0 - tier.Discount) // Apply discount
 			break
 		}
 	}
 
-	// Add rush order fee
+	// Add rush order fee if applicable
 	if options.RushOrder {
-		price += matrix.RushOrderFee
+		price += service.RushOrderFee
 	}
 
 	// Multiply by quantity

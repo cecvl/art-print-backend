@@ -17,7 +17,14 @@ func loadEnv() string {
 	if env == "" {
 		env = "dev"
 	}
-	envPath := "configs/.env." + env
+
+	// Map "production" to "prod" for filename
+	filename := env
+	if env == "production" {
+		filename = "prod"
+	}
+
+	envPath := "configs/.env." + filename
 
 	if err := godotenv.Load(envPath); err != nil {
 		log.Printf("⚠️ No %s found, using system env vars", envPath)

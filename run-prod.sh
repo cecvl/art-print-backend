@@ -8,25 +8,31 @@ echo "   - APP_ENV=production (seed data will NOT run)"
 echo "   - Connects to Firebase and Cloudinary"
 echo ""
 
-# Check if firebase-service-account.json exists
-if [ ! -f "firebase-service-account.json" ]; then
-    echo "❌ Error: firebase-service-account.json not found in current directory"
+# Check if firebase-service-account.json exists in configs/
+if [ ! -f "configs/firebase-service-account.json" ]; then
+    echo "❌ Error: configs/firebase-service-account.json not found"
+    echo "   Please place your service account file in the configs/ directory"
     exit 1
 fi
 
-# Extract project ID from firebase-service-account.json
-PROJECT_ID=$(grep -o '"project_id": "[^"]*' firebase-service-account.json | cut -d'"' -f4)
+# Extract project ID from configs/firebase-service-account.json
+PROJECT_ID=$(grep -o '"project_id": "[^"]*' configs/firebase-service-account.json | cut -d'"' -f4)
 
 if [ -z "$PROJECT_ID" ]; then
-    echo "❌ Error: Could not extract project_id from firebase-service-account.json"
+    echo "❌ Error: Could not extract project_id from configs/firebase-service-account.json"
     exit 1
 fi
 
 echo "✅ Found Firebase project: $PROJECT_ID"
 
-# Ensure configs directory and symlink exist
-echo "📁 Setting up configs directory..."
-./setup-configs.sh
+# Ensure configs directory exists
+echo "📁 Checking configs directory..."
+if [ ! -d "configs" ]; then
+    echo "❌ Error: configs directory missing"
+    exit 1
+fi
+
+# No need to copy service account as we expect it in configs/
 
 # Check for Cloudinary credentials
 if [ -z "$CLOUDINARY_CLOUD_NAME" ] || [ -z "$CLOUDINARY_API_KEY" ] || [ -z "$CLOUDINARY_API_SECRET" ]; then
@@ -52,13 +58,13 @@ EOF
 echo "✅ Created docker-compose.override.yml with project ID"
 
 # Rebuild if needed, then start
-echo "📦 Building/updating container..."
-sudo docker-compose -f docker-compose.prod.yml build server
+echo "📦 Building/updating containers..."
+docker compose -f docker-compose.prod.yml build
 
-echo "🚀 Starting server in production mode..."
+echo "🚀 Starting services in production mode..."
 echo "   Seed data will NOT run (APP_ENV=production)"
 echo ""
-sudo docker-compose -f docker-compose.prod.yml up server
+docker compose -f docker-compose.prod.yml up -d
 
 
 

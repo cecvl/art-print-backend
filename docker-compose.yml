@@ -8,10 +8,10 @@ services:
       dockerfile: Dockerfile.server
     container_name: art-print-server
     ports:
-      - "3001:3001"
+      - "8080:8080"
     environment:
       - APP_ENV=${APP_ENV:-dev}
-      - PORT=3001
+      - PORT=8080
       - GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
       - FIRESTORE_EMULATOR_HOST=${FIRESTORE_EMULATOR_HOST:-}
@@ -28,7 +28,7 @@ services:
       - art-print-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3

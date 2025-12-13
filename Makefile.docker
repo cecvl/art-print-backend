@@ -20,7 +20,7 @@ docker-build-all: docker-build-server docker-build-seed
 # Docker run targets
 docker-run-server:
 	@echo "🚀 Running server container..."
-	docker run -p 3001:3001 \
+	docker run -p 8080:8080 \
 		-e APP_ENV=dev \
 		-e GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json \
 		-v $(PWD)/configs:/app/configs:ro \

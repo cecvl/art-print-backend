@@ -11,10 +11,10 @@ services:
     image: art-print-server:latest
     container_name: art-print-server
     ports:
-      - "3001:3001"
+      - "8080:8080"
     environment:
       - APP_ENV=production
-      - PORT=3001
+      - PORT=8080
       - GOOGLE_APPLICATION_CREDENTIALS=/app/configs/firebase-service-account.json
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
       # Cloudinary configuration (set via environment variables or .env file)
@@ -26,7 +26,7 @@ services:
       - ./configs:/app/configs:ro
     restart: always
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3

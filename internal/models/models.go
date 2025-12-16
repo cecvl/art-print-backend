@@ -23,14 +23,15 @@ type User struct {
 }
 
 type Artwork struct {
-	ID           string                 `json:"id,omitempty"`
-	ArtistID     string                 `firestore:"artistId"`
-	Title        string                 `firestore:"title"`
-	Description  string                 `firestore:"description"`
-	ImageURL     string                 `firestore:"imageUrl" json:"imageUrl"`
-	PrintOptions map[string]interface{} `firestore:"printOptions"`
-	IsAvailable  bool                   `firestore:"isAvailable"`
-	CreatedAt    time.Time              `firestore:"createdAt"`
+	ID                 string                 `json:"id,omitempty"`
+	ArtistID           string                 `firestore:"artistId"`
+	Title              string                 `firestore:"title"`
+	Description        string                 `firestore:"description"`
+	ImageURL           string                 `firestore:"imageUrl" json:"imageUrl"`
+	PrintOptions       map[string]interface{} `firestore:"printOptions"`
+	EligiblePrintShops []string               `firestore:"eligiblePrintShops,omitempty" json:"eligiblePrintShops,omitempty"`
+	IsAvailable        bool                   `firestore:"isAvailable"`
+	CreatedAt          time.Time              `firestore:"createdAt"`
 }
 
 // Utilize []CartItem in Order Struct

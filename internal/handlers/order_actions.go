@@ -11,14 +11,14 @@ import (
 	"github.com/cecvl/art-print-backend/internal/models"
 )
 
-type selectPrintShopReq struct {
-	OrderID     string `json:"orderId"`
-	PrintShopID string `json:"printShopId"`
+type setArtworkPrintShopsReq struct {
+	ArtworkID          string   `json:"artworkId"`
+	EligiblePrintShops []string `json:"eligiblePrintShops"`
 }
 
-// SelectPrintShopHandler allows an authorized user to set the print shop for an order
-// Authorization: buyer who created the order OR an artist who owns any artwork in the order
-func SelectPrintShopHandler(w http.ResponseWriter, r *http.Request) {
+// SetArtworkPrintShopsHandler allows an artist to set which print shops can process their artwork
+// Authorization: artist who owns the artwork
+func SetArtworkPrintShopsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	uid := ""
 	if v := ctx.Value("userId"); v != nil {
@@ -31,68 +31,59 @@ func SelectPrintShopHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var body selectPrintShopReq
+	var body setArtworkPrintShopsReq
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
 		return
 	}
-	if body.OrderID == "" || body.PrintShopID == "" {
-		http.Error(w, "orderId and printShopId required", http.StatusBadRequest)
+	if body.ArtworkID == "" {
+		http.Error(w, "artworkId required", http.StatusBadRequest)
 		return
 	}
 
-	// fetch order
-	doc, err := firebase.FirestoreClient.Collection("orders").Doc(body.OrderID).Get(ctx)
+	// fetch artwork
+	doc, err := firebase.FirestoreClient.Collection("artworks").Doc(body.ArtworkID).Get(ctx)
 	if err != nil {
-		http.Error(w, "order not found", http.StatusNotFound)
+		http.Error(w, "artwork not found", http.StatusNotFound)
 		return
 	}
-	var order models.Order
-	if err := doc.DataTo(&order); err != nil {
-		http.Error(w, "invalid order data", http.StatusInternalServerError)
-		return
-	}
-
-	// only allow change if order is pending/confirmed (not completed)
-	if order.Status == "completed" || order.Status == "cancelled" {
-		http.Error(w, "order cannot be reassigned", http.StatusBadRequest)
+	var artwork models.Artwork
+	if err := doc.DataTo(&artwork); err != nil {
+		http.Error(w, "invalid artwork data", http.StatusInternalServerError)
 		return
 	}
 
-	// check authorization: buyer OR artist owning any artwork in items
-	authorized := false
-	if order.BuyerID == uid {
-		authorized = true
-	} else {
-		// check artwork ownership
-		for _, it := range order.Items {
-			artDoc, err := firebase.FirestoreClient.Collection("artworks").Doc(it.ArtworkID).Get(ctx)
-			if err != nil {
-				continue
-			}
-			var art models.Artwork
-			if artDoc.DataTo(&art) == nil {
-				if art.ArtistID == uid {
-					authorized = true
-					break
-				}
-			}
+	// check authorization: must be the artist who owns the artwork
+	if artwork.ArtistID != uid {
+		http.Error(w, "forbidden: only artwork owner can set print shops", http.StatusForbidden)
+		return
+	}
+
+	// validate print shops exist
+	for _, shopID := range body.EligiblePrintShops {
+		if shopID == "" {
+			continue
+		}
+		_, err := firebase.FirestoreClient.Collection("printShops").Doc(shopID).Get(ctx)
+		if err != nil {
+			log.Printf("⚠️ print shop %s not found, skipping", shopID)
+			http.Error(w, "invalid print shop ID: "+shopID, http.StatusBadRequest)
+			return
 		}
 	}
-	if !authorized {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
 
-	// set printShopId
-	_, err = firebase.FirestoreClient.Collection("orders").Doc(body.OrderID).Update(ctx, []firestore.Update{{Path: "printShopId", Value: body.PrintShopID}, {Path: "updatedAt", Value: time.Now()}})
+	// set eligiblePrintShops
+	_, err = firebase.FirestoreClient.Collection("artworks").Doc(body.ArtworkID).Update(ctx, []firestore.Update{
+		{Path: "eligiblePrintShops", Value: body.EligiblePrintShops},
+		{Path: "updatedAt", Value: time.Now()},
+	})
 	if err != nil {
-		log.Printf("❌ failed to set printshop for order: %v", err)
-		http.Error(w, "failed to set printshop", http.StatusInternalServerError)
+		log.Printf("❌ failed to set eligible print shops for artwork: %v", err)
+		http.Error(w, "failed to set print shops", http.StatusInternalServerError)
 		return
 	}
 
-	writeAdminAction(ctx, r, "select_printshop", "order", body.OrderID, map[string]interface{}{"printShopId": body.PrintShopID})
+	log.Printf("✅ Artist %s set eligible print shops for artwork %s: %v", uid, body.ArtworkID, body.EligiblePrintShops)
 
 	w.WriteHeader(http.StatusNoContent)
 }

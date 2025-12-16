@@ -199,8 +199,8 @@ func setupRoutes() http.Handler {
 	mux.Handle("/payments/webhook/", middleware.LogMiddleware(http.HandlerFunc(paymentHandler.PaymentWebhookHandler)))
 	mux.Handle("/payments/refund", middleware.LogMiddleware(protected(http.HandlerFunc(paymentHandler.RefundPaymentHandler))))
 
-	// allow buyer/artist to select printshop for an order
-	mux.Handle("/orders/select-printshop", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.SelectPrintShopHandler))))
+	// allow artist to set eligible print shops for their artworks
+	mux.Handle("/artworks/set-printshops", middleware.LogMiddleware(protected(http.HandlerFunc(handlers.SetArtworkPrintShopsHandler))))
 
 	return middleware.CORS(mux)
 }

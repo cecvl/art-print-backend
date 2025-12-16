@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/cecvl/art-print-backend/internal/firebase"
 	"github.com/cecvl/art-print-backend/internal/models"
 	"github.com/cecvl/art-print-backend/internal/repositories"
 	"github.com/cecvl/art-print-backend/internal/services/pricing"
@@ -25,6 +26,33 @@ func NewServiceDiscovery(repo *repositories.PrintShopRepository) *ServiceDiscove
 
 // FindMatchingShops finds all shops that can fulfill an order with given options
 func (sd *ServiceDiscovery) FindMatchingShops(ctx context.Context, options models.PrintOrderOptions) ([]models.ShopMatch, error) {
+	return sd.FindMatchingShopsForOrder(ctx, nil, options)
+}
+
+// FindMatchingShopsForOrder finds shops that can fulfill an order, respecting artwork eligiblePrintShops
+func (sd *ServiceDiscovery) FindMatchingShopsForOrder(ctx context.Context, order *models.Order, options models.PrintOrderOptions) ([]models.ShopMatch, error) {
+	// Get eligible shop IDs from artworks if order provided
+	eligibleShopIDs := make(map[string]bool)
+	if order != nil {
+		for _, item := range order.Items {
+			// Fetch artwork to get eligiblePrintShops
+			artDoc, err := firebase.FirestoreClient.Collection("artworks").Doc(item.ArtworkID).Get(ctx)
+			if err != nil {
+				continue
+			}
+			var artwork models.Artwork
+			if err := artDoc.DataTo(&artwork); err != nil {
+				continue
+			}
+			// Add eligible shops for this artwork
+			for _, shopID := range artwork.EligiblePrintShops {
+				if shopID != "" {
+					eligibleShopIDs[shopID] = true
+				}
+			}
+		}
+	}
+
 	// Get all active shops
 	shops, err := sd.repo.GetActiveShops(ctx)
 	if err != nil {
@@ -35,6 +63,10 @@ func (sd *ServiceDiscovery) FindMatchingShops(ctx context.Context, options model
 
 	// For each shop, find matching services
 	for _, shop := range shops {
+		// If eligibleShopIDs is populated (from artworks), filter by it
+		if len(eligibleShopIDs) > 0 && !eligibleShopIDs[shop.ID] {
+			continue // Skip shops not eligible for any artwork in order
+		}
 		services, err := sd.repo.GetServicesByShopID(ctx, shop.ID)
 		if err != nil {
 			log.Printf("⚠️ Failed to get services for shop %s: %v", shop.ID, err)
@@ -89,26 +121,26 @@ func (sd *ServiceDiscovery) serviceSupportsOptions(service *models.PrintService,
 	// matrix := service.PriceMatrix // Deprecated
 
 	/*
-	// Check material support
-	if len(matrix.MaterialMarkups) > 0 {
-		if _, ok := matrix.MaterialMarkups[options.Material]; !ok {
-			return false
+		// Check material support
+		if len(matrix.MaterialMarkups) > 0 {
+			if _, ok := matrix.MaterialMarkups[options.Material]; !ok {
+				return false
+			}
 		}
-	}
 
-	// Check medium support
-	if len(matrix.MediumMarkups) > 0 {
-		if _, ok := matrix.MediumMarkups[options.Medium]; !ok {
-			return false
+		// Check medium support
+		if len(matrix.MediumMarkups) > 0 {
+			if _, ok := matrix.MediumMarkups[options.Medium]; !ok {
+				return false
+			}
 		}
-	}
 
-	// Check frame support
-	if len(matrix.FramePrices) > 0 {
-		if _, ok := matrix.FramePrices[options.Frame]; !ok {
-			return false
+		// Check frame support
+		if len(matrix.FramePrices) > 0 {
+			if _, ok := matrix.FramePrices[options.Frame]; !ok {
+				return false
+			}
 		}
-	}
 	*/
 
 	return true

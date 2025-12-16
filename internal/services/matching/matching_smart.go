@@ -26,8 +26,8 @@ func NewSmartMatcher() *SmartMatcher {
 
 // Assign uses smart scoring to assign order to best matching shop
 func (m *SmartMatcher) Assign(ctx context.Context, order *models.Order, options models.PrintOrderOptions) error {
-	// Find all matching shops
-	matches, err := m.discovery.FindMatchingShops(ctx, options)
+	// Find all matching shops (respecting artwork eligiblePrintShops)
+	matches, err := m.discovery.FindMatchingShopsForOrder(ctx, order, options)
 	if err != nil {
 		log.Printf("❌ Failed to find matching shops: %v", err)
 		return err

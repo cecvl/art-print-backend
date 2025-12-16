@@ -93,8 +93,26 @@ func GetAdminOrderHandler(w http.ResponseWriter, r *http.Request) {
 	paymentRepo := repositories.NewPaymentRepository(firebase.FirestoreClient)
 	payments, _ := paymentRepo.GetPaymentsByOrderID(ctx, orderId)
 
+	// get artwork details including eligiblePrintShops
+	artworkDetails := make(map[string]*models.Artwork)
+	for _, item := range order.Items {
+		if _, exists := artworkDetails[item.ArtworkID]; !exists {
+			if artDoc, err := firebase.FirestoreClient.Collection("artworks").Doc(item.ArtworkID).Get(ctx); err == nil {
+				var artwork models.Artwork
+				if err := artDoc.DataTo(&artwork); err == nil {
+					artwork.ID = item.ArtworkID
+					artworkDetails[item.ArtworkID] = &artwork
+				}
+			}
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{"order": order, "payments": payments})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"order":    order,
+		"payments": payments,
+		"artworks": artworkDetails,
+	})
 }
 
 type updateStatusReq struct {

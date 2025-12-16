@@ -33,7 +33,7 @@ func (m *ManualMatcher) Assign(ctx context.Context, order *models.Order, options
 
 // GetMatches returns all matching shops for an order (for admin review)
 func (m *ManualMatcher) GetMatches(ctx context.Context, order *models.Order, options models.PrintOrderOptions) ([]models.ShopMatch, error) {
-	matches, err := m.discovery.FindMatchingShops(ctx, options)
+	matches, err := m.discovery.FindMatchingShopsForOrder(ctx, order, options)
 	if err != nil {
 		log.Printf("❌ Failed to find matching shops: %v", err)
 		return nil, err
